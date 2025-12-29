@@ -7,30 +7,30 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Hardcoded positioning for each category (percentage-based)
+// Hardcoded positioning for each category - forced Paper Doll alignment
 const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
   tops: {
     position: 'absolute',
-    top: '28%',
+    top: '20%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '35%',
-    zIndex: 20,
+    width: '70%',
+    zIndex: 30,
   },
   bottoms: {
     position: 'absolute',
-    top: '50%',
+    top: '45%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '32%',
-    zIndex: 10,
+    width: '45%',
+    zIndex: 20,
   },
   bags: {
     position: 'absolute',
-    top: '45%',
-    left: '65%',
-    width: '25%',
-    zIndex: 30,
+    top: '40%',
+    left: '70%',
+    width: '30%',
+    zIndex: 40,
   },
 };
 
@@ -48,8 +48,8 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         className="pointer-events-none"
         style={{
           ...LAYER_STYLES[category],
-          mixBlendMode: 'multiply', // Makes white backgrounds transparent
           height: 'auto',
+          mixBlendMode: 'multiply', // Makes white backgrounds transparent
         }}
         draggable={false}
       />
@@ -59,7 +59,10 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
   return (
     <div className={`relative flex justify-center items-end h-full w-full ${className}`}>
       {/* Inner wrapper maintains aspect ratio */}
-      <div className="relative h-[90%]" style={{ aspectRatio: '1 / 2' }}>
+      <div 
+        className="relative h-[90%]" 
+        style={{ aspectRatio: '1 / 2' }}
+      >
         {/* Base Avatar - ALWAYS visible, z-index 0 */}
         <img
           src={baseAvatar}
@@ -69,7 +72,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
           draggable={false}
         />
 
-        {/* Clothing layers - hardcoded positions */}
+        {/* Clothing layers - hardcoded positions, rendered in z-order */}
         {renderClothingLayer('bottoms')}
         {renderClothingLayer('tops')}
         {renderClothingLayer('bags')}
