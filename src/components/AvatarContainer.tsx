@@ -9,30 +9,31 @@ interface AvatarContainerProps {
 
 // Fine-tuned positioning for photorealistic transparent cutouts on the anime avatar
 const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
-  // Tops: cover shoulders → waist
+  // Tops: shoulders → hips
   tops: {
     position: 'absolute',
-    top: '14%',
+    top: '22%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '64%',
+    width: '54%',
     zIndex: 30,
   },
-  // Bottoms: start at waist
+  // Bottoms: waist → ankles
   bottoms: {
     position: 'absolute',
-    top: '44%',
+    top: '55%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '44%',
+    width: '38%',
     zIndex: 20,
   },
-  // Bag: sits on right hand
+  // Bag: hangs on right side
   bags: {
     position: 'absolute',
-    top: '36%',
-    left: '72%',
-    width: '26%',
+    top: '40%',
+    left: '68%',
+    transform: 'translateX(-50%)',
+    width: '18%',
     zIndex: 40,
   },
 };
@@ -55,7 +56,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
           opacity: 1,
           objectFit: 'contain',
           // subtle depth so it reads over the avatar
-          filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.12))',
+          filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.10))',
         }}
         draggable={false}
       />
