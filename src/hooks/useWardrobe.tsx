@@ -57,7 +57,11 @@ type WardrobeContextValue = {
   wardrobe: Wardrobe;
   items: ClothingItem[];
   isLoading: boolean;
-  addItem: (imageUrl: string, category: ClothingCategory) => ClothingItem;
+  addItem: (
+    imageUrl: string,
+    category: ClothingCategory,
+    overrides?: { scale?: number; anchorOffset?: { x: number; y: number } }
+  ) => ClothingItem;
   removeItem: (id: string) => void;
   getItemsByCategory: (category: ClothingCategory) => ClothingItem[];
 };
@@ -106,17 +110,21 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addItem = useCallback(
-    (imageUrl: string, category: ClothingCategory): ClothingItem => {
+    (
+      imageUrl: string,
+      category: ClothingCategory,
+      overrides?: { scale?: number; anchorOffset?: { x: number; y: number } }
+    ): ClothingItem => {
       const defaults = CATEGORY_ANCHORS[category];
-      
+
       const newItem: ClothingItem = {
         id: crypto.randomUUID(),
         imageUrl,
         category,
         createdAt: new Date(),
         anchorType: defaults.anchorType,
-        anchorOffset: { ...defaults.anchorOffset },
-        scale: defaults.scale,
+        anchorOffset: overrides?.anchorOffset ? { ...overrides.anchorOffset } : { ...defaults.anchorOffset },
+        scale: typeof overrides?.scale === "number" ? overrides.scale : defaults.scale,
       };
 
       console.log("[Wardrobe] Adding item:", newItem.id, "to", category);
