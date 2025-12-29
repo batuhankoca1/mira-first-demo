@@ -1,6 +1,6 @@
 import { ClothingCategory } from '@/types/clothing';
 
-export interface DemoItem {
+export interface WardrobeItem {
   id: string;
   category: ClothingCategory;
   src: string;
@@ -12,7 +12,7 @@ export interface DemoItem {
 }
 
 // Container reference: 300x600
-// Hardcoded anchors per category (from spec):
+// Hardcoded anchors per category:
 // - Bottoms:     x=150, y=315, width=215
 // - Tops:        x=150, y=175, width=215
 // - Jackets:     x=150, y=175, width=235
@@ -21,7 +21,7 @@ export interface DemoItem {
 // - Bags:        x=230, y=260, width=120
 // - Accessories: default width=80
 
-export const DEMO_ITEMS: DemoItem[] = [
+export const WARDROBE_ITEMS: WardrobeItem[] = [
   // ========== TOPS (4) ==========
   {
     id: 'top-1',
@@ -318,13 +318,13 @@ export const DEMO_ITEMS: DemoItem[] = [
 ];
 
 // Helper to get items by category
-export const getItemsByCategory = (category: ClothingCategory): DemoItem[] => {
-  return DEMO_ITEMS.filter((item) => item.category === category);
+export const getItemsByCategory = (category: ClothingCategory): WardrobeItem[] => {
+  return WARDROBE_ITEMS.filter((item) => item.category === category);
 };
 
 // Get item by ID
-export const getItemById = (id: string): DemoItem | undefined => {
-  return DEMO_ITEMS.find((item) => item.id === id);
+export const getItemById = (id: string): WardrobeItem | undefined => {
+  return WARDROBE_ITEMS.find((item) => item.id === id);
 };
 
 // All categories in render order (bottom to top z-index)

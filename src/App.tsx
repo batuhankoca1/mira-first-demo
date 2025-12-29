@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Closet from "./pages/Closet";
+import CategoryDetail from "./pages/CategoryDetail";
 import DressUp from "./pages/DressUp";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
@@ -22,6 +23,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/closet" replace />} />
             <Route path="/closet" element={<Closet />} />
+            <Route path="/closet/:category" element={<CategoryDetail />} />
             <Route path="/dressup" element={<DressUp />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/profile" element={<Profile />} />

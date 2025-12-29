@@ -1,8 +1,8 @@
-import { DemoItem, CATEGORY_ORDER } from '@/data/demoCloset';
+import { WardrobeItem, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory } from '@/types/clothing';
 
 interface AvatarContainerProps {
-  selectedItems: Partial<Record<ClothingCategory, DemoItem | null>>;
+  selectedItems: Partial<Record<ClothingCategory, WardrobeItem | null>>;
   className?: string;
 }
 
@@ -23,7 +23,7 @@ const Z_INDEX: Record<ClothingCategory, number> = {
 
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
   // Render a single clothing layer
-  const renderClothingLayer = (item: DemoItem) => {
+  const renderClothingLayer = (item: WardrobeItem) => {
     // Calculate position: anchorX/Y is center point, offset adjusts it
     const left = item.anchorX + item.offsetX - item.width / 2;
     // Maintain aspect ratio
@@ -54,7 +54,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
 
   // Get active items in z-order
   const activeItems = CATEGORY_ORDER.map((cat) => selectedItems[cat]).filter(
-    (item): item is DemoItem => item !== null && item !== undefined
+    (item): item is WardrobeItem => item !== null && item !== undefined
   );
 
   // If dress is selected, hide tops and bottoms visually
