@@ -17,15 +17,11 @@ interface PhotoUploadProps {
   defaultCategory?: ClothingCategory;
 }
 
-// Layer positions matching Avatar2D (percentage-based)
+// Layer positions matching Avatar2D (percentage-based) - only 3 categories
 const LAYER_POSITIONS: Record<ClothingCategory, { top: string; height: string; width: string; left?: string }> = {
   tops: { top: "22%", height: "28%", width: "50%" },
-  jackets: { top: "20%", height: "32%", width: "58%" },
   bottoms: { top: "48%", height: "26%", width: "45%" },
-  dresses: { top: "22%", height: "50%", width: "55%" },
-  shoes: { top: "88%", height: "12%", width: "35%" },
   bags: { top: "40%", height: "20%", width: "25%" },
-  accessories: { top: "5%", height: "15%", width: "30%" },
 };
 
 function clamp01(v: number) {

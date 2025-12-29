@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { ClothingItem } from '@/types/clothing';
+import { ClothingItem, ClothingCategory } from '@/types/clothing';
 import { Avatar2D } from './Avatar2D';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
@@ -12,65 +12,41 @@ interface OutfitSwiperProps {
 interface OutfitState {
   topIndex: number;
   bottomIndex: number;
-  dressIndex: number;
-  jacketIndex: number;
-  shoesIndex: number;
   bagIndex: number;
-  accessoryIndex: number;
 }
 
-type SwipeCategory = 'tops' | 'bottoms' | 'dresses' | 'jackets' | 'shoes' | 'bags' | 'accessories';
+type SwipeCategory = 'tops' | 'bottoms' | 'bags';
 
 export function OutfitSwiper({ items }: OutfitSwiperProps) {
   const [outfit, setOutfit] = useState<OutfitState>({
     topIndex: 0,
     bottomIndex: 0,
-    dressIndex: -1,
-    jacketIndex: -1,
-    shoesIndex: 0,
     bagIndex: -1,
-    accessoryIndex: -1,
   });
   const [activeCategory, setActiveCategory] = useState<SwipeCategory>('tops');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
   const tops = useMemo(() => items.filter(i => i.category === 'tops'), [items]);
   const bottoms = useMemo(() => items.filter(i => i.category === 'bottoms'), [items]);
-  const dresses = useMemo(() => items.filter(i => i.category === 'dresses'), [items]);
-  const jackets = useMemo(() => items.filter(i => i.category === 'jackets'), [items]);
-  const shoes = useMemo(() => items.filter(i => i.category === 'shoes'), [items]);
   const bags = useMemo(() => items.filter(i => i.category === 'bags'), [items]);
-  const accessories = useMemo(() => items.filter(i => i.category === 'accessories'), [items]);
 
   const currentTop = tops[outfit.topIndex];
   const currentBottom = bottoms[outfit.bottomIndex];
-  const currentDress = outfit.dressIndex >= 0 ? dresses[outfit.dressIndex] : undefined;
-  const currentJacket = outfit.jacketIndex >= 0 ? jackets[outfit.jacketIndex] : undefined;
-  const currentShoes = shoes[outfit.shoesIndex];
   const currentBag = outfit.bagIndex >= 0 ? bags[outfit.bagIndex] : undefined;
-  const currentAccessory = outfit.accessoryIndex >= 0 ? accessories[outfit.accessoryIndex] : undefined;
 
   const getCategoryItems = useCallback((cat: SwipeCategory) => {
     switch (cat) {
       case 'tops': return tops;
       case 'bottoms': return bottoms;
-      case 'dresses': return dresses;
-      case 'jackets': return jackets;
-      case 'shoes': return shoes;
       case 'bags': return bags;
-      case 'accessories': return accessories;
     }
-  }, [tops, bottoms, dresses, jackets, shoes, bags, accessories]);
+  }, [tops, bottoms, bags]);
 
   const getIndexKey = (cat: SwipeCategory): keyof OutfitState => {
     switch (cat) {
       case 'tops': return 'topIndex';
       case 'bottoms': return 'bottomIndex';
-      case 'dresses': return 'dressIndex';
-      case 'jackets': return 'jacketIndex';
-      case 'shoes': return 'shoesIndex';
       case 'bags': return 'bagIndex';
-      case 'accessories': return 'accessoryIndex';
     }
   };
 
@@ -87,8 +63,8 @@ export function OutfitSwiper({ items }: OutfitSwiperProps) {
 
         if (catItems.length === 0) return prev;
 
-        // For optional categories (dress, jacket, bag, accessory), -1 means "none"
-        const isOptional = ['dresses', 'jackets', 'bags', 'accessories'].includes(activeCategory);
+        // Bags are optional (-1 means "none")
+        const isOptional = activeCategory === 'bags';
         
         if (isOptional) {
           const newIndex = currentIndex + delta;
@@ -98,11 +74,6 @@ export function OutfitSwiper({ items }: OutfitSwiperProps) {
             (newOutfit as any)[indexKey] = -1;
           } else {
             (newOutfit as any)[indexKey] = newIndex;
-          }
-          
-          // If selecting a dress, clear top/bottom indices
-          if (activeCategory === 'dresses' && newOutfit.dressIndex >= 0) {
-            // Keep dress, dress replaces top+bottom visually
           }
         } else {
           // Required categories cycle through available items
@@ -119,22 +90,14 @@ export function OutfitSwiper({ items }: OutfitSwiperProps) {
     setOutfit({
       topIndex: tops.length > 0 ? Math.floor(Math.random() * tops.length) : 0,
       bottomIndex: bottoms.length > 0 ? Math.floor(Math.random() * bottoms.length) : 0,
-      dressIndex: -1,
-      jacketIndex: jackets.length > 0 && Math.random() > 0.5 ? Math.floor(Math.random() * jackets.length) : -1,
-      shoesIndex: shoes.length > 0 ? Math.floor(Math.random() * shoes.length) : 0,
       bagIndex: bags.length > 0 && Math.random() > 0.7 ? Math.floor(Math.random() * bags.length) : -1,
-      accessoryIndex: accessories.length > 0 && Math.random() > 0.7 ? Math.floor(Math.random() * accessories.length) : -1,
     });
-  }, [tops.length, bottoms.length, jackets.length, shoes.length, bags.length, accessories.length]);
+  }, [tops.length, bottoms.length, bags.length]);
 
   const categoryButtons: { key: SwipeCategory; label: string; count: number }[] = [
     { key: 'tops', label: '👕', count: tops.length },
     { key: 'bottoms', label: '👖', count: bottoms.length },
-    { key: 'dresses', label: '👗', count: dresses.length },
-    { key: 'jackets', label: '🧥', count: jackets.length },
-    { key: 'shoes', label: '👟', count: shoes.length },
     { key: 'bags', label: '👜', count: bags.length },
-    { key: 'accessories', label: '💍', count: accessories.length },
   ];
 
   if (items.length === 0) {
@@ -143,16 +106,16 @@ export function OutfitSwiper({ items }: OutfitSwiperProps) {
         <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mb-4">
           <span className="text-4xl">🪞</span>
         </div>
-        <p className="text-lg font-medium text-foreground mb-1">Henüz kıyafet yok</p>
-        <p className="text-sm text-muted-foreground">Önce gardıroba item ekle</p>
+        <p className="text-lg font-medium text-foreground mb-1">No items yet</p>
+        <p className="text-sm text-muted-foreground">Add some clothes first</p>
       </div>
     );
   }
 
   const currentCatIndex = outfit[getIndexKey(activeCategory)];
   const currentCatItems = getCategoryItems(activeCategory);
-  const isOptional = ['dresses', 'jackets', 'bags', 'accessories'].includes(activeCategory);
-  const displayIndex = isOptional && currentCatIndex === -1 ? 'yok' : `${currentCatIndex + 1}/${currentCatItems.length}`;
+  const isOptional = activeCategory === 'bags';
+  const displayIndex = isOptional && currentCatIndex === -1 ? 'none' : `${currentCatIndex + 1}/${currentCatItems.length}`;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -165,13 +128,9 @@ export function OutfitSwiper({ items }: OutfitSwiperProps) {
         )}
       >
         <Avatar2D
-          top={currentDress ? undefined : currentTop}
-          bottom={currentDress ? undefined : currentBottom}
-          dress={currentDress}
-          jacket={currentJacket}
-          shoes={currentShoes}
+          top={currentTop}
+          bottom={currentBottom}
           bag={currentBag}
-          accessory={currentAccessory}
           className="h-[350px]"
         />
       </div>

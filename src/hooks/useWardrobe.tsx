@@ -6,25 +6,14 @@ export type Wardrobe = Record<ClothingCategory, ClothingItem[]>;
 
 const STORAGE_KEY = "mira-wardrobe-v2";
 
-const CATEGORIES: ClothingCategory[] = [
-  "tops",
-  "bottoms",
-  "dresses",
-  "jackets",
-  "shoes",
-  "bags",
-  "accessories",
-];
+// Only 3 categories now
+const CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags"];
 
 function createEmptyWardrobe(): Wardrobe {
   return {
     tops: [],
     bottoms: [],
-    dresses: [],
-    jackets: [],
-    shoes: [],
     bags: [],
-    accessories: [],
   };
 }
 

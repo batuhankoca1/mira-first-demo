@@ -4,40 +4,21 @@ import { cn } from '@/lib/utils';
 interface Avatar2DProps {
   top?: ClothingItem;
   bottom?: ClothingItem;
-  dress?: ClothingItem;
-  jacket?: ClothingItem;
-  shoes?: ClothingItem;
   bag?: ClothingItem;
-  accessory?: ClothingItem;
   className?: string;
 }
 
 // Fixed layer positions for each category (percentage-based for responsiveness)
 const LAYER_STYLES: Record<string, React.CSSProperties> = {
-  dress: {
-    top: '22%',
-    height: '50%',
-    width: '55%',
-  },
   top: {
     top: '22%',
     height: '28%',
     width: '50%',
   },
-  jacket: {
-    top: '20%',
-    height: '32%',
-    width: '58%',
-  },
   bottom: {
     top: '48%',
     height: '26%',
     width: '45%',
-  },
-  shoes: {
-    top: '88%',
-    height: '12%',
-    width: '35%',
   },
   bag: {
     top: '40%',
@@ -46,21 +27,12 @@ const LAYER_STYLES: Record<string, React.CSSProperties> = {
     height: '20%',
     width: '25%',
   },
-  accessory: {
-    top: '5%',
-    height: '15%',
-    width: '30%',
-  },
 };
 
 export function Avatar2D({ 
   top, 
   bottom, 
-  dress, 
-  jacket,
-  shoes, 
   bag,
-  accessory,
   className 
 }: Avatar2DProps) {
   // Render a clothing layer
@@ -151,25 +123,13 @@ export function Avatar2D({
 
       {/* Clothing layers - ordered by z-index */}
       {/* Bottom layer (pants/skirt) */}
-      {!dress && renderLayer(bottom, 'bottom', 10)}
-      
-      {/* Dress (replaces top + bottom) */}
-      {renderLayer(dress, 'dress', 15)}
+      {renderLayer(bottom, 'bottom', 10)}
       
       {/* Top layer */}
-      {!dress && renderLayer(top, 'top', 20)}
-      
-      {/* Jacket layer (over top) */}
-      {renderLayer(jacket, 'jacket', 25)}
-      
-      {/* Shoes */}
-      {renderLayer(shoes, 'shoes', 5)}
+      {renderLayer(top, 'top', 20)}
       
       {/* Bag (side accessory) */}
       {renderLayer(bag, 'bag', 30)}
-      
-      {/* Accessory (head/neck) */}
-      {renderLayer(accessory, 'accessory', 35)}
     </div>
   );
 }

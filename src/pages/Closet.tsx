@@ -6,18 +6,14 @@ import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
 
-// Shelf zones mapped to the new layout
+// Shelf zones mapped to the new layout - only 3 categories
 const SHELF_ZONES: {
   category: ClothingCategory;
   zone: string;
 }[] = [
   { category: 'tops', zone: 'top-[5%] left-[3%] w-[35%] h-[14%]' },
   { category: 'bottoms', zone: 'top-[5%] right-[3%] w-[35%] h-[14%]' },
-  { category: 'jackets', zone: 'top-[19%] left-[3%] w-[32%] h-[18%]' },
-  { category: 'dresses', zone: 'top-[19%] right-[3%] w-[32%] h-[18%]' },
-  { category: 'shoes', zone: 'top-[38%] left-[3%] w-[28%] h-[28%]' },
   { category: 'bags', zone: 'top-[38%] right-[3%] w-[25%] h-[14%]' },
-  { category: 'accessories', zone: 'top-[52%] right-[3%] w-[25%] h-[14%]' },
 ];
 
 const Closet = () => {
