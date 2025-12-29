@@ -91,7 +91,7 @@ export function CategoryInventory({
 
         {/* Fixed Bottom Action */}
         {categoryItems.length > 0 && (
-          <div className="p-4 border-t border-border bg-background">
+          <div className="p-4 border-t border-border bg-background pb-safe">
             <Button onClick={onAddNew} className="w-full gap-2">
               <Plus className="w-4 h-4" />
               Yeni Item Ekle
