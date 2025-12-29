@@ -7,9 +7,9 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Fixed container: 300x600
-const CONTAINER_WIDTH = 300;
-const CONTAINER_HEIGHT = 600;
+// Reference container dimensions for positioning calculations
+const REFERENCE_WIDTH = 300;
+const REFERENCE_HEIGHT = 600;
 
 // Z-index for each layer (strict order per spec)
 const Z_INDEX: Record<ClothingCategory, number> = {
@@ -23,23 +23,22 @@ const Z_INDEX: Record<ClothingCategory, number> = {
 };
 
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
-  // Render a single clothing layer
+  // Render a single clothing layer with percentage-based positioning
   const renderClothingLayer = (item: WardrobeItem) => {
-    // Calculate position: anchorX/Y is center point, offset adjusts it
-    const left = item.anchorX + item.offsetX - item.width / 2;
-    // Maintain aspect ratio
-    const height = item.width;
-    const top = item.anchorY + item.offsetY - height / 2;
+    // Convert fixed pixel values to percentages for responsive scaling
+    const leftPercent = ((item.anchorX + item.offsetX - item.width / 2) / REFERENCE_WIDTH) * 100;
+    const topPercent = ((item.anchorY + item.offsetY - item.width / 2) / REFERENCE_HEIGHT) * 100;
+    const widthPercent = (item.width / REFERENCE_WIDTH) * 100;
 
     return (
       <div
         key={item.id}
         className="absolute transition-all duration-150 ease-out pointer-events-none"
         style={{
-          left: `${left}px`,
-          top: `${top}px`,
-          width: `${item.width}px`,
-          height: `${height}px`,
+          left: `${leftPercent}%`,
+          top: `${topPercent}%`,
+          width: `${widthPercent}%`,
+          aspectRatio: '1 / 1',
           zIndex: Z_INDEX[item.category],
         }}
       >
@@ -69,23 +68,25 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
 
   return (
     <div
-      className={`relative mx-auto ${className}`}
-      style={{
-        width: `${CONTAINER_WIDTH}px`,
-        height: `${CONTAINER_HEIGHT}px`,
-      }}
+      className={`relative flex items-end justify-center w-full h-full ${className}`}
     >
-      {/* Base Avatar - anime style image */}
-      <img
-        src={baseAvatar}
-        alt="Avatar"
-        className="absolute inset-0 w-full h-full object-contain"
-        style={{ zIndex: 0 }}
-        draggable={false}
-      />
+      {/* Inner container maintains aspect ratio */}
+      <div 
+        className="relative h-[90%] max-h-full"
+        style={{ aspectRatio: `${REFERENCE_WIDTH} / ${REFERENCE_HEIGHT}` }}
+      >
+        {/* Base Avatar - anime style image */}
+        <img
+          src={baseAvatar}
+          alt="Avatar"
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ zIndex: 0 }}
+          draggable={false}
+        />
 
-      {/* Clothing layers */}
-      {filteredItems.map(renderClothingLayer)}
+        {/* Clothing layers */}
+        {filteredItems.map(renderClothingLayer)}
+      </div>
     </div>
   );
 }
