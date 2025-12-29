@@ -4,7 +4,7 @@ import { Shirt, Sparkles, Compass, User } from 'lucide-react';
 
 const navItems = [
   { path: '/closet', label: 'Closet', icon: Shirt },
-  { path: '/dressup', label: 'Dress Up', icon: Sparkles },
+  { path: '/dressup', label: 'Builder', icon: Sparkles },
   { path: '/explore', label: 'Explore', icon: Compass },
   { path: '/profile', label: 'Profile', icon: User },
 ];
