@@ -1,4 +1,4 @@
-export type ClothingCategory = 'tops' | 'bottoms' | 'dresses' | 'outerwear' | 'shoes' | 'accessories';
+export type ClothingCategory = 'tops' | 'bottoms' | 'dresses' | 'jackets' | 'shoes' | 'bags' | 'accessories';
 
 export interface ClothingItem {
   id: string;
@@ -12,8 +12,9 @@ export interface Outfit {
   top?: ClothingItem;
   bottom?: ClothingItem;
   dress?: ClothingItem;
-  outerwear?: ClothingItem;
+  jacket?: ClothingItem;
   shoes?: ClothingItem;
+  bag?: ClothingItem;
   accessory?: ClothingItem;
 }
 
@@ -21,7 +22,8 @@ export const CATEGORIES: { value: ClothingCategory; label: string; icon: string 
   { value: 'tops', label: 'Tops', icon: '👕' },
   { value: 'bottoms', label: 'Bottoms', icon: '👖' },
   { value: 'dresses', label: 'Dresses', icon: '👗' },
-  { value: 'outerwear', label: 'Outerwear', icon: '🧥' },
+  { value: 'jackets', label: 'Jackets', icon: '🧥' },
   { value: 'shoes', label: 'Shoes', icon: '👟' },
-  { value: 'accessories', label: 'Accessories', icon: '👜' },
+  { value: 'bags', label: 'Bags', icon: '👜' },
+  { value: 'accessories', label: 'Accessories', icon: '💍' },
 ];

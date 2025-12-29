@@ -4,32 +4,47 @@ import { PhotoUpload } from '@/components/PhotoUpload';
 import { useCloset } from '@/hooks/useCloset';
 import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
-import closetScene from '@/assets/closet-scene-illustrated.png';
+import closetScene from '@/assets/closet-layout-new.png';
 
-// Shelf zones mapped to the illustrated wardrobe sections
+// Shelf zones mapped to the new layout
 const SHELF_ZONES: {
   category: ClothingCategory;
   zone: string;
 }[] = [
+  // Top-left: Tops (folded)
   { 
     category: 'tops', 
-    zone: 'top-[8%] left-[5%] w-[40%] h-[10%]'
+    zone: 'top-[5%] left-[3%] w-[35%] h-[14%]'
   },
+  // Top-right: Bottoms (folded)
   { 
     category: 'bottoms', 
-    zone: 'top-[18%] left-[15%] w-[45%] h-[16%]'
+    zone: 'top-[5%] right-[3%] w-[35%] h-[14%]'
   },
+  // Middle-left: Jackets (hanging)
+  { 
+    category: 'jackets', 
+    zone: 'top-[19%] left-[3%] w-[32%] h-[18%]'
+  },
+  // Middle-right: Dresses (hanging)
   { 
     category: 'dresses', 
-    zone: 'top-[8%] right-[3%] w-[30%] h-[28%]'
+    zone: 'top-[19%] right-[3%] w-[32%] h-[18%]'
   },
+  // Bottom-left: Shoes
   { 
     category: 'shoes', 
-    zone: 'top-[38%] left-[3%] w-[22%] h-[28%]'
+    zone: 'top-[38%] left-[3%] w-[28%] h-[28%]'
   },
+  // Bottom-right upper: Bags
+  { 
+    category: 'bags', 
+    zone: 'top-[38%] right-[3%] w-[25%] h-[14%]'
+  },
+  // Bottom-right lower: Accessories
   { 
     category: 'accessories', 
-    zone: 'top-[38%] right-[3%] w-[22%] h-[30%]'
+    zone: 'top-[52%] right-[3%] w-[25%] h-[14%]'
   },
 ];
 
@@ -55,9 +70,9 @@ const Closet = () => {
 
   return (
     <div className="fixed inset-0 bg-[#fdf6ed]">
-      {/* Header overlay */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-[#fdf6ed] via-[#fdf6ed]/80 to-transparent">
-        <div className="max-w-md mx-auto px-4 pt-3 pb-6">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-[#fdf6ed] via-[#fdf6ed]/90 to-transparent">
+        <div className="max-w-md mx-auto px-4 pt-3 pb-4">
           <div className="flex items-center justify-between">
             <button className="w-10 h-10 flex items-center justify-center text-amber-900/70 hover:text-amber-900 transition-colors">
               <Menu className="w-6 h-6" strokeWidth={2.5} />
@@ -80,35 +95,38 @@ const Closet = () => {
         <img 
           src={closetScene}
           alt="My Closet"
-          className="absolute inset-0 w-full h-full object-contain object-center pt-16 pb-20"
+          className="absolute inset-0 w-full h-full object-contain object-center pt-14 pb-20"
           draggable={false}
         />
 
         {/* Invisible shelf tap zones */}
-        {SHELF_ZONES.map(({ category, zone }) => {
-          const count = getItemCount(category);
-          const isTapped = tappedZone === category;
-          
-          return (
-            <button
-              key={category}
-              onClick={() => handleShelfTap(category)}
-              className={`absolute ${zone} transition-all duration-75 rounded-xl ${
-                isTapped 
-                  ? 'bg-white/20 ring-2 ring-amber-400/50' 
-                  : 'bg-transparent active:bg-white/10'
-              }`}
-              style={{ marginTop: '64px' }}
-              aria-label={`Open ${category}`}
-            >
-              {count > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        <div className="absolute inset-0 pt-14 pb-20">
+          <div className="relative w-full h-full">
+            {SHELF_ZONES.map(({ category, zone }) => {
+              const count = getItemCount(category);
+              const isTapped = tappedZone === category;
+              
+              return (
+                <button
+                  key={category}
+                  onClick={() => handleShelfTap(category)}
+                  className={`absolute ${zone} transition-all duration-75 rounded-xl ${
+                    isTapped 
+                      ? 'bg-white/25 ring-2 ring-amber-400/60' 
+                      : 'bg-transparent active:bg-white/15'
+                  }`}
+                  aria-label={`Open ${category}`}
+                >
+                  {count > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-bold flex items-center justify-center shadow-md">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Upload Modal */}
