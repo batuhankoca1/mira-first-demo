@@ -6,14 +6,21 @@ import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
 
-// Shelf zones mapped to the new layout - only 3 categories
+// Active shelf zones - positioned over folded clothes in illustration
 const SHELF_ZONES: {
   category: ClothingCategory;
   zone: string;
+  label: string;
 }[] = [
-  { category: 'tops', zone: 'top-[5%] left-[3%] w-[35%] h-[14%]' },
-  { category: 'bottoms', zone: 'top-[5%] right-[3%] w-[35%] h-[14%]' },
-  { category: 'bags', zone: 'top-[38%] right-[3%] w-[25%] h-[14%]' },
+  { category: 'tops', zone: 'top-[8%] left-[5%] w-[32%] h-[12%]', label: 'Tops' },
+  { category: 'bottoms', zone: 'top-[8%] right-[5%] w-[32%] h-[12%]', label: 'Bottoms' },
+  { category: 'bags', zone: 'top-[58%] right-[5%] w-[28%] h-[12%]', label: 'Bags' },
+];
+
+// Visual-only labels (not clickable, just for illustration context)
+const VISUAL_LABELS = [
+  { label: 'Shoes', position: 'bottom-[22%] left-[8%]' },
+  { label: 'Accessories', position: 'top-[42%] right-[8%]' },
 ];
 
 const Closet = () => {
@@ -63,10 +70,11 @@ const Closet = () => {
           draggable={false}
         />
 
-        {/* Invisible shelf tap zones */}
+        {/* Interactive shelf zones with inline labels */}
         <div className="absolute inset-0 pt-14 pb-20">
           <div className="relative w-full h-full">
-            {SHELF_ZONES.map(({ category, zone }) => {
+            {/* Active category buttons */}
+            {SHELF_ZONES.map(({ category, zone, label }) => {
               const count = getItemCount(category);
               const isTapped = tappedZone === category;
               
@@ -74,21 +82,31 @@ const Closet = () => {
                 <button
                   key={category}
                   onClick={() => handleShelfTap(category)}
-                  className={`absolute ${zone} transition-all duration-75 rounded-xl ${
+                  className={`absolute ${zone} transition-all duration-75 rounded-xl flex items-center justify-center ${
                     isTapped 
-                      ? 'bg-white/25 ring-2 ring-amber-400/60' 
-                      : 'bg-transparent active:bg-white/15'
+                      ? 'bg-amber-200/40 ring-2 ring-amber-500/60' 
+                      : 'bg-amber-900/5 hover:bg-amber-100/30 active:bg-amber-200/40'
                   }`}
                   aria-label={`Open ${category}`}
                 >
-                  {count > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-bold flex items-center justify-center shadow-md">
-                      {count}
-                    </span>
-                  )}
+                  <span className="px-3 py-1.5 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm text-amber-900 font-medium text-sm">
+                    {label} <span className="text-amber-600/80 font-normal">({count})</span>
+                  </span>
                 </button>
               );
             })}
+
+            {/* Visual-only labels for out-of-scope categories */}
+            {VISUAL_LABELS.map(({ label, position }) => (
+              <div
+                key={label}
+                className={`absolute ${position} pointer-events-none`}
+              >
+                <span className="px-2.5 py-1 rounded-md bg-white/60 backdrop-blur-sm text-amber-800/60 font-medium text-xs">
+                  {label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
