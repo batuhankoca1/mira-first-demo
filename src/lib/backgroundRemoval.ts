@@ -23,19 +23,44 @@ async function getSegmenter() {
 }
 
 function fitWithinMaxDim(width: number, height: number, maxDim: number) {
-  if (width <= maxDim && height <= maxDim) return { width, height, scale: 1 };
+  if (width <= maxDim && height <= maxDim) return { width, height };
   if (width >= height) {
-    const newW = maxDim;
-    const newH = Math.round((height * maxDim) / width);
-    return { width: newW, height: newH, scale: newW / width };
+    return { width: maxDim, height: Math.max(1, Math.round((height * maxDim) / width)) };
   }
-  const newH = maxDim;
-  const newW = Math.round((width * maxDim) / height);
-  return { width: newW, height: newH, scale: newH / height };
+  return { width: Math.max(1, Math.round((width * maxDim) / height)), height: maxDim };
 }
 
 function canvasToDataURL(canvas: HTMLCanvasElement, type: string, quality?: number) {
   return canvas.toDataURL(type, quality);
+}
+
+function clamp01(x: number) {
+  return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+// The segmentation pipeline may return different mask encodings.
+// We normalize everything into a Float32Array in [0..1] of length width*height.
+function toFloatMask(maskData: any, expectedLength: number): Float32Array {
+  // Common case: Float32Array already
+  if (maskData instanceof Float32Array) {
+    if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
+    return maskData;
+  }
+
+  // Common case: Uint8ClampedArray (0..255)
+  if (maskData instanceof Uint8ClampedArray || maskData instanceof Uint8Array) {
+    if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
+    const out = new Float32Array(expectedLength);
+    for (let i = 0; i < expectedLength; i++) out[i] = maskData[i] / 255;
+    return out;
+  }
+
+  // Sometimes the mask is wrapped (e.g. Tensor-like)
+  const maybe = maskData?.data ?? maskData?.value ?? maskData;
+  if (maybe instanceof Float32Array) return toFloatMask(maybe, expectedLength);
+  if (maybe instanceof Uint8ClampedArray || maybe instanceof Uint8Array) return toFloatMask(maybe, expectedLength);
+
+  throw new Error("Unsupported mask format");
 }
 
 function maskToGrayscaleCanvas(mask: Float32Array, width: number, height: number) {
@@ -45,8 +70,7 @@ function maskToGrayscaleCanvas(mask: Float32Array, width: number, height: number
   const ctx = c.getContext("2d")!;
   const img = ctx.createImageData(width, height);
   for (let i = 0; i < mask.length; i++) {
-    const v = Math.max(0, Math.min(1, mask[i]));
-    const g = Math.round(v * 255);
+    const g = Math.round(clamp01(mask[i]) * 255);
     const o = i * 4;
     img.data[o] = g;
     img.data[o + 1] = g;
@@ -57,209 +81,105 @@ function maskToGrayscaleCanvas(mask: Float32Array, width: number, height: number
   return c;
 }
 
-/**
- * Find the best foreground mask from segmentation result.
- * The model returns multiple segments - we want to keep the subject (clothing) not background.
- * We'll combine all non-background segments OR pick the largest central object.
- */
-function findBestMask(
-  segmentationResult: any[],
-  width: number,
-  height: number
-): Float32Array {
-  console.log("[BG Removal] Processing", segmentationResult.length, "segments");
-  
-  // Create a combined mask - we want to keep everything that's NOT background/wall/floor
-  const combinedMask = new Float32Array(width * height);
-  
-  // Background-like labels to exclude
-  const bgLabels = new Set([
-    'wall', 'floor', 'ceiling', 'sky', 'ground', 'road', 'sidewalk', 
-    'building', 'tree', 'grass', 'water', 'mountain', 'sand', 'snow',
-    'carpet', 'rug', 'curtain', 'blind', 'windowpane', 'door'
-  ]);
-  
-  // Foreground/clothing-like labels to prioritize
-  const fgLabels = new Set([
-    'person', 'clothes', 'shirt', 'pants', 'dress', 'jacket', 'coat',
-    'shoe', 'bag', 'accessory', 'hat', 'scarf', 'tie', 'belt'
-  ]);
-  
-  let hasExplicitForeground = false;
-  
-  for (const segment of segmentationResult) {
-    const label = (segment.label || '').toLowerCase();
-    const mask = segment.mask?.data as Float32Array | undefined;
-    
-    if (!mask || mask.length !== width * height) continue;
-    
-    const isBg = bgLabels.has(label);
-    const isFg = fgLabels.has(label);
-    
-    console.log(`[BG Removal] Segment: "${label}", isBg: ${isBg}, isFg: ${isFg}`);
-    
-    if (isFg) {
-      hasExplicitForeground = true;
-      // Add this mask to combined (keep foreground)
-      for (let i = 0; i < mask.length; i++) {
-        combinedMask[i] = Math.max(combinedMask[i], mask[i]);
-      }
-    } else if (!isBg) {
-      // Unknown label - add it as potential foreground
-      for (let i = 0; i < mask.length; i++) {
-        combinedMask[i] = Math.max(combinedMask[i], mask[i] * 0.8);
+const BG_LABELS = new Set([
+  "wall",
+  "floor",
+  "ceiling",
+  "sky",
+  "ground",
+  "road",
+  "sidewalk",
+  "building",
+  "tree",
+  "grass",
+  "water",
+  "mountain",
+  "sand",
+  "snow",
+  "carpet",
+  "rug",
+  "curtain",
+  "blind",
+  "windowpane",
+  "door",
+  "background",
+]);
+
+type BBox = { minX: number; minY: number; maxX: number; maxY: number };
+
+function computeBoundingBoxFromAlpha(
+  rgbaCanvas: HTMLCanvasElement,
+  alphaThreshold = 10
+): BBox {
+  const ctx = rgbaCanvas.getContext("2d")!;
+  const { width, height } = rgbaCanvas;
+  const img = ctx.getImageData(0, 0, width, height);
+
+  let minX = width,
+    minY = height,
+    maxX = -1,
+    maxY = -1;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const a = img.data[(y * width + x) * 4 + 3];
+      if (a > alphaThreshold) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
       }
     }
   }
-  
-  // If we found no explicit foreground, use simple center-weighted approach
-  if (!hasExplicitForeground && segmentationResult.length > 0) {
-    console.log("[BG Removal] No explicit foreground found, using center-weighted approach");
-    
-    // Find the segment with highest center mass
-    let bestScore = -1;
-    let bestMask: Float32Array | null = null;
-    
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-    
-    for (const segment of segmentationResult) {
-      const mask = segment.mask?.data as Float32Array | undefined;
-      if (!mask || mask.length !== width * height) continue;
-      
-      let weightedSum = 0;
-      let totalMass = 0;
-      
-      for (let i = 0; i < mask.length; i++) {
-        if (mask[i] < 0.3) continue;
-        
-        const x = i % width;
-        const y = Math.floor(i / width);
-        const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-        const centerWeight = 1 - (dist / maxDist);
-        
-        weightedSum += mask[i] * centerWeight;
-        totalMass += mask[i];
-      }
-      
-      const score = totalMass > 100 ? weightedSum / totalMass : 0;
-      
-      if (score > bestScore) {
-        bestScore = score;
-        bestMask = mask;
-      }
-    }
-    
-    if (bestMask) {
-      for (let i = 0; i < bestMask.length; i++) {
-        combinedMask[i] = bestMask[i];
-      }
-    }
+
+  if (maxX < 0 || maxY < 0) {
+    return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 };
   }
-  
-  // If still empty, try inverting the first segment (assuming it's background)
-  const hasContent = combinedMask.some(v => v > 0.3);
-  if (!hasContent && segmentationResult.length > 0) {
-    console.log("[BG Removal] Inverting first segment as fallback");
-    const firstMask = segmentationResult[0].mask?.data as Float32Array | undefined;
-    if (firstMask && firstMask.length === width * height) {
-      for (let i = 0; i < firstMask.length; i++) {
-        combinedMask[i] = 1 - firstMask[i];
-      }
-    }
-  }
-  
-  return combinedMask;
+
+  return { minX, minY, maxX, maxY };
 }
 
-/**
- * Apply soft edge preservation - don't threshold too aggressively
- * This preserves garment edges better
- */
-function refineMask(mask: Float32Array, width: number, height: number): Float32Array {
-  const refined = new Float32Array(mask.length);
-  
-  // Apply a small morphological close to fill holes
-  // First dilate slightly
+// Garment integrity rule: never erode. We ONLY expand/fill small holes.
+function fillSmallHoles(mask: Float32Array, width: number, height: number): Float32Array {
+  const out = new Float32Array(mask.length);
+  // 1 pass dilation-ish: take max of neighborhood and original
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
-      let maxVal = mask[i];
-      
-      // Check 3x3 neighborhood
+      let m = mask[i];
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           const ny = y + dy;
           const nx = x + dx;
-          if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-            maxVal = Math.max(maxVal, mask[ny * width + nx] * 0.7);
-          }
+          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+          m = Math.max(m, mask[ny * width + nx]);
         }
       }
-      refined[i] = maxVal;
+      // keep extra pixels: never less than original
+      out[i] = Math.max(mask[i], m);
     }
   }
-  
-  // Boost confidence for values above threshold
-  for (let i = 0; i < refined.length; i++) {
-    if (refined[i] > 0.25) {
-      refined[i] = Math.min(1, refined[i] * 1.3);
-    }
-  }
-  
-  return refined;
+  return out;
 }
 
-type BBox = { minX: number; minY: number; maxX: number; maxY: number };
-
-function computeBoundingBox(mask: Float32Array, width: number, height: number, threshold: number): BBox {
-  let minX = width, minY = height, maxX = 0, maxY = 0;
-  
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (mask[y * width + x] >= threshold) {
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-  
-  // Fallback if nothing found
-  if (maxX < minX || maxY < minY) {
-    return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 };
-  }
-  
-  return { minX, minY, maxX, maxY };
-}
-
-function composeRGBA(
-  rgbCanvas: HTMLCanvasElement,
-  mask: Float32Array
-): void {
-  const { width, height } = rgbCanvas;
+function composeRGBA(rgbCanvas: HTMLCanvasElement, alphaMask01: Float32Array) {
   const ctx = rgbCanvas.getContext("2d")!;
+  const { width, height } = rgbCanvas;
   const img = ctx.getImageData(0, 0, width, height);
 
-  // Keep original RGB intact, only set alpha from mask
-  for (let i = 0; i < mask.length; i++) {
-    const alpha = Math.round(Math.max(0, Math.min(1, mask[i])) * 255);
-    img.data[i * 4 + 3] = alpha;
+  // CRITICAL: keep RGB intact; set alpha only.
+  for (let i = 0; i < alphaMask01.length; i++) {
+    img.data[i * 4 + 3] = Math.round(clamp01(alphaMask01[i]) * 255);
   }
 
   ctx.putImageData(img, 0, 0);
 }
 
-function cropAndPadToAvatar(
-  srcCanvas: HTMLCanvasElement,
-  bbox: BBox
-): HTMLCanvasElement {
+function cropPadCenterTo400(srcCanvas: HTMLCanvasElement, bbox: BBox): HTMLCanvasElement {
+  const padding = 16;
   const srcW = srcCanvas.width;
   const srcH = srcCanvas.height;
 
-  const padding = 12;
   const minX = Math.max(0, bbox.minX - padding);
   const minY = Math.max(0, bbox.minY - padding);
   const maxX = Math.min(srcW - 1, bbox.maxX + padding);
@@ -274,13 +194,13 @@ function cropAndPadToAvatar(
   const cctx = cropped.getContext("2d")!;
   cctx.drawImage(srcCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
-  // Scale to fit into 400x400 with padding, then center
   const out = document.createElement("canvas");
   out.width = AVATAR_ASSET_SIZE;
   out.height = AVATAR_ASSET_SIZE;
   const octx = out.getContext("2d")!;
 
-  const maxSize = AVATAR_ASSET_SIZE * 0.88;
+  // Fit within 400x400, keep aspect
+  const maxSize = AVATAR_ASSET_SIZE * 0.92;
   const scale = Math.min(maxSize / cropW, maxSize / cropH);
   const drawW = cropW * scale;
   const drawH = cropH * scale;
@@ -301,13 +221,11 @@ export async function processClothingFile(
   file: File,
   onProgress?: (status: string) => void
 ): Promise<{ assetBlob: Blob; assetDataUrl: string; debug: ClothingDebugViews }> {
-  onProgress?.("Resim okunuyor...");
+  onProgress?.("Decoding image...");
 
-  // Decode file to bitmap (handles WEBP, HEIC, etc.)
+  // Properly decode WEBP/etc to full-resolution pixels
   const bitmap = await createImageBitmap(file);
-  console.log("[BG Removal] Original size:", bitmap.width, "x", bitmap.height);
 
-  // Resize for inference
   const { width: infW, height: infH } = fitWithinMaxDim(
     bitmap.width,
     bitmap.height,
@@ -322,38 +240,77 @@ export async function processClothingFile(
 
   const originalDataUrl = canvasToDataURL(rgbCanvas, "image/png");
 
-  onProgress?.("Model yükleniyor...");
+  onProgress?.("Loading model...");
   const segmenter = await getSegmenter();
 
-  onProgress?.("Arka plan temizleniyor...");
+  onProgress?.("Removing background...");
   const inputForModel = canvasToDataURL(rgbCanvas, "image/jpeg", 0.92);
-  const segmentationResult = await segmenter(inputForModel);
+  const segments = await segmenter(inputForModel);
 
-  console.log("[BG Removal] Segmentation result:", segmentationResult);
+  const expectedLen = infW * infH;
 
-  // Find best foreground mask
-  let mask = findBestMask(segmentationResult, infW, infH);
-  
-  // Refine mask to preserve edges
-  mask = refineMask(mask, infW, infH);
+  // Build background-union mask
+  const bgUnion = new Float32Array(expectedLen);
+  let bgCount = 0;
 
-  // Debug: raw mask
-  const maskCanvas = maskToGrayscaleCanvas(mask, infW, infH);
-  const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
+  for (const seg of Array.isArray(segments) ? segments : []) {
+    const label = String(seg?.label ?? "").toLowerCase();
+    const raw = seg?.mask?.data;
+    if (!raw) continue;
 
-  // Compute bounding box
-  const bbox = computeBoundingBox(mask, infW, infH, 0.2);
-  console.log("[BG Removal] Bounding box:", bbox);
+    const m = toFloatMask(raw, expectedLen);
 
-  // Compose RGBA (original RGB + mask alpha)
-  composeRGBA(rgbCanvas, mask);
+    if (BG_LABELS.has(label)) {
+      bgCount++;
+      for (let i = 0; i < expectedLen; i++) {
+        bgUnion[i] = Math.max(bgUnion[i], m[i]);
+      }
+    }
+  }
+
+  // Foreground = NOT background (prefer keeping pixels)
+  const fg = new Float32Array(expectedLen);
+
+  if (bgCount > 0) {
+    for (let i = 0; i < expectedLen; i++) fg[i] = clamp01(1 - bgUnion[i]);
+  } else {
+    // If background labels are not present, fallback to union of all segments
+    const union = new Float32Array(expectedLen);
+    for (const seg of Array.isArray(segments) ? segments : []) {
+      const raw = seg?.mask?.data;
+      if (!raw) continue;
+      const m = toFloatMask(raw, expectedLen);
+      for (let i = 0; i < expectedLen; i++) union[i] = Math.max(union[i], m[i]);
+    }
+
+    // If union is mostly 1, it's likely background; invert.
+    let mean = 0;
+    for (let i = 0; i < expectedLen; i++) mean += union[i];
+    mean /= expectedLen;
+
+    const inverted = mean > 0.6;
+    for (let i = 0; i < expectedLen; i++) fg[i] = clamp01(inverted ? 1 - union[i] : union[i]);
+  }
+
+  // Fill small holes (never erode)
+  const fgFilled = fillSmallHoles(fg, infW, infH);
+
+  // Compose RGBA
+  composeRGBA(rgbCanvas, fgFilled);
   const composedDataUrl = canvasToDataURL(rgbCanvas, "image/png");
 
-  onProgress?.("Avatar için hazırlanıyor...");
-  const avatarCanvas = cropAndPadToAvatar(rgbCanvas, bbox);
+  // Debug mask view (foreground mask)
+  const maskCanvas = maskToGrayscaleCanvas(fgFilled, infW, infH);
+  const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
+
+  // Crop based on alpha (very forgiving threshold)
+  const bbox = computeBoundingBoxFromAlpha(rgbCanvas, 8);
+
+  onProgress?.("Preparing wearable asset...");
+  const sprite = cropPadCenterTo400(rgbCanvas, bbox);
 
   const assetBlob = await new Promise<Blob>((resolve, reject) => {
-    avatarCanvas.toBlob(
+    sprite.toBlob(
       (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
       "image/png",
       1.0
@@ -361,8 +318,6 @@ export async function processClothingFile(
   });
 
   const assetDataUrl = await blobToBase64(assetBlob);
-
-  console.log("[BG Removal] Asset created, size:", assetBlob.size, "bytes");
 
   return {
     assetBlob,
