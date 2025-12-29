@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { PhotoUpload } from '@/components/PhotoUpload';
+import { CategoryInventory } from '@/components/CategoryInventory';
 import { useCloset } from '@/hooks/useCloset';
 import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
@@ -11,57 +12,44 @@ const SHELF_ZONES: {
   category: ClothingCategory;
   zone: string;
 }[] = [
-  // Top-left: Tops (folded)
-  { 
-    category: 'tops', 
-    zone: 'top-[5%] left-[3%] w-[35%] h-[14%]'
-  },
-  // Top-right: Bottoms (folded)
-  { 
-    category: 'bottoms', 
-    zone: 'top-[5%] right-[3%] w-[35%] h-[14%]'
-  },
-  // Middle-left: Jackets (hanging)
-  { 
-    category: 'jackets', 
-    zone: 'top-[19%] left-[3%] w-[32%] h-[18%]'
-  },
-  // Middle-right: Dresses (hanging)
-  { 
-    category: 'dresses', 
-    zone: 'top-[19%] right-[3%] w-[32%] h-[18%]'
-  },
-  // Bottom-left: Shoes
-  { 
-    category: 'shoes', 
-    zone: 'top-[38%] left-[3%] w-[28%] h-[28%]'
-  },
-  // Bottom-right upper: Bags
-  { 
-    category: 'bags', 
-    zone: 'top-[38%] right-[3%] w-[25%] h-[14%]'
-  },
-  // Bottom-right lower: Accessories
-  { 
-    category: 'accessories', 
-    zone: 'top-[52%] right-[3%] w-[25%] h-[14%]'
-  },
+  { category: 'tops', zone: 'top-[5%] left-[3%] w-[35%] h-[14%]' },
+  { category: 'bottoms', zone: 'top-[5%] right-[3%] w-[35%] h-[14%]' },
+  { category: 'jackets', zone: 'top-[19%] left-[3%] w-[32%] h-[18%]' },
+  { category: 'dresses', zone: 'top-[19%] right-[3%] w-[32%] h-[18%]' },
+  { category: 'shoes', zone: 'top-[38%] left-[3%] w-[28%] h-[28%]' },
+  { category: 'bags', zone: 'top-[38%] right-[3%] w-[25%] h-[14%]' },
+  { category: 'accessories', zone: 'top-[52%] right-[3%] w-[25%] h-[14%]' },
 ];
 
 const Closet = () => {
-  const { items, addItem } = useCloset();
+  const { items, addItem, removeItem } = useCloset();
   const [showUpload, setShowUpload] = useState(false);
-  const [uploadCategory, setUploadCategory] = useState<ClothingCategory>('tops');
+  const [showInventory, setShowInventory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>('tops');
   const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
 
   const handleShelfTap = (category: ClothingCategory) => {
-    setUploadCategory(category);
+    setSelectedCategory(category);
     setTappedZone(category);
     
     setTimeout(() => {
       setTappedZone(null);
-      setShowUpload(true);
+      // Open inventory view instead of camera
+      setShowInventory(true);
     }, 100);
+  };
+
+  const handleAddNew = () => {
+    setShowInventory(false);
+    setShowUpload(true);
+  };
+
+  const handleUploadComplete = (imageUrl: string, category: ClothingCategory) => {
+    addItem(imageUrl, category);
+  };
+
+  const handleDeleteItem = (id: string) => {
+    removeItem(id);
   };
 
   const getItemCount = (category: ClothingCategory) => {
@@ -129,12 +117,23 @@ const Closet = () => {
         </div>
       </div>
 
+      {/* Category Inventory Modal */}
+      {showInventory && (
+        <CategoryInventory
+          category={selectedCategory}
+          items={items}
+          onClose={() => setShowInventory(false)}
+          onAddNew={handleAddNew}
+          onDeleteItem={handleDeleteItem}
+        />
+      )}
+
       {/* Upload Modal */}
       {showUpload && (
         <PhotoUpload
-          onUpload={addItem}
+          onUpload={handleUploadComplete}
           onClose={() => setShowUpload(false)}
-          defaultCategory={uploadCategory}
+          defaultCategory={selectedCategory}
         />
       )}
 
