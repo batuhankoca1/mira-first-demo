@@ -7,10 +7,11 @@ import { Camera, X, Check } from 'lucide-react';
 interface PhotoUploadProps {
   onUpload: (imageUrl: string, category: ClothingCategory) => void;
   onClose: () => void;
+  defaultCategory?: ClothingCategory;
 }
 
-export function PhotoUpload({ onUpload, onClose }: PhotoUploadProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>('tops');
+export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: PhotoUploadProps) {
+  const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>(defaultCategory);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
