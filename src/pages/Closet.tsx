@@ -18,7 +18,7 @@ const Closet = () => {
     : getItemsByCategory(activeCategory);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-28 overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container max-w-md mx-auto px-6 py-4">
