@@ -7,29 +7,29 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Hardcoded positioning for each category - forced Paper Doll alignment
+// Fine-tuned positioning for photorealistic clothes on anime avatar
 const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
   tops: {
     position: 'absolute',
-    top: '20%',
+    top: '18%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '70%',
+    width: '58%',
     zIndex: 30,
   },
   bottoms: {
     position: 'absolute',
-    top: '45%',
+    top: '42%',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '45%',
+    width: '38%',
     zIndex: 20,
   },
   bags: {
     position: 'absolute',
-    top: '40%',
-    left: '70%',
-    width: '30%',
+    top: '35%',
+    left: '72%',
+    width: '28%',
     zIndex: 40,
   },
 };
@@ -49,7 +49,8 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         style={{
           ...LAYER_STYLES[category],
           height: 'auto',
-          mixBlendMode: 'multiply', // Makes white backgrounds transparent
+          opacity: 0.95,
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
         }}
         draggable={false}
       />
