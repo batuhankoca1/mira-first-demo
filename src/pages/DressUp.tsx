@@ -154,12 +154,10 @@ const DressUp = () => {
       </div>
 
       {/* Content */}
-      <div className="container max-w-md mx-auto px-4 py-4">
-        {/* Avatar - Centered */}
-        <div className="flex justify-center mb-4">
-          <div className="transform scale-[0.85] origin-top">
-            <AvatarContainer selectedItems={getSelectedItems()} />
-          </div>
+      <div className="container max-w-md mx-auto px-4 py-4 flex flex-col">
+        {/* Avatar - Full height fitting room */}
+        <div className="h-[400px] mb-4">
+          <AvatarContainer selectedItems={getSelectedItems()} />
         </div>
 
         {/* Category Selector - Horizontal Scroll */}
