@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { AvatarContainerTrimmed } from '@/components/AvatarContainerTrimmed';
-import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
+import { WARDROBE_ITEMS, WardrobeItem, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
+import { useDemoWardrobeItems } from '@/hooks/useDemoWardrobeItems';
 import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
 
 const STORAGE_KEY = 'dressup-outfit';
@@ -44,6 +45,8 @@ const DressUp = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(outfit));
   }, [outfit]);
+
+  const { getItemsByCategory, isProcessing } = useDemoWardrobeItems(WARDROBE_ITEMS);
 
   // Get items for active category
   const categoryItems = getItemsByCategory(activeCategory);
@@ -95,9 +98,9 @@ const DressUp = () => {
       bags: null,
     };
 
-    CATEGORY_ORDER.forEach((cat) => {
-      const items = getItemsByCategory(cat);
-      if (items.length > 0) {
+      CATEGORY_ORDER.forEach((cat) => {
+        const items = getItemsByCategory(cat);
+        if (items.length > 0) {
         // 30% chance of "none" for bags
         if (cat === 'bags' && Math.random() < 0.3) {
           newOutfit[cat] = null;
@@ -116,12 +119,12 @@ const DressUp = () => {
 
     (Object.keys(outfit) as ClothingCategory[]).forEach((cat) => {
       const idx = outfit[cat];
-      if (idx !== null) {
-        const items = getItemsByCategory(cat);
-        result[cat] = items[idx] ?? null;
-      } else {
-        result[cat] = null;
-      }
+        if (idx !== null) {
+          const items = getItemsByCategory(cat);
+          result[cat] = items[idx] ?? null;
+        } else {
+          result[cat] = null;
+        }
     });
 
     return result;
@@ -240,10 +243,16 @@ const DressUp = () => {
 
           {/* Current Selection Label */}
           <div className="mt-3 text-center text-sm text-muted-foreground">
-            {categoryInfo?.icon} {categoryInfo?.label}:{' '}
-            <span className="font-medium text-foreground">
-              {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
-            </span>
+            {isProcessing ? (
+              <span className="font-medium text-foreground">Görseller temizleniyor…</span>
+            ) : (
+              <>
+                {categoryInfo?.icon} {categoryInfo?.label}:{' '}
+                <span className="font-medium text-foreground">
+                  {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
