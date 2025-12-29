@@ -43,7 +43,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         }}
       >
         <img
-          src={item.imageUrl}
+          src={item.src}
           alt={item.category}
           className="w-full h-full object-cover"
           draggable={false}

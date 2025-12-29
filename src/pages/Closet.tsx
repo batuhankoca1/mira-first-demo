@@ -106,8 +106,11 @@ const Closet = () => {
 
       {/* Category Inventory Modal - Demo items only */}
       {showInventory && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="w-full max-w-md mx-auto bg-background rounded-t-3xl p-6 animate-in slide-in-from-bottom duration-300">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setShowInventory(false)}>
+          <div 
+            className="w-full max-w-md mx-auto bg-background rounded-t-3xl p-6 pb-8 animate-in slide-in-from-bottom duration-300 mb-20"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <span>{categoryInfo?.icon}</span>
@@ -121,16 +124,19 @@ const Closet = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-3 max-h-[300px] overflow-y-auto">
+            <div 
+              className="grid grid-cols-4 gap-3 overflow-y-auto overscroll-contain"
+              style={{ maxHeight: 'calc(50vh - 100px)' }}
+            >
               {categoryItems.map((item) => (
                 <div
                   key={item.id}
                   className="aspect-square rounded-lg bg-secondary overflow-hidden"
                 >
                   <img
-                    src={item.imageUrl}
+                    src={item.src}
                     alt={item.category}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-1"
                   />
                 </div>
               ))}
