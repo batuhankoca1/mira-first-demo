@@ -3,44 +3,33 @@ import { BottomNav } from '@/components/BottomNav';
 import { PhotoUpload } from '@/components/PhotoUpload';
 import { useCloset } from '@/hooks/useCloset';
 import { ClothingCategory } from '@/types/clothing';
-import closetScene from '@/assets/closet-scene-full.png';
+import { Menu, User } from 'lucide-react';
+import closetScene from '@/assets/closet-scene-illustrated.png';
 
-// Shelf zones mapped precisely to the illustrated wardrobe
-// These invisible tap zones overlay the physical shelf areas
+// Shelf zones mapped to the illustrated wardrobe sections
 const SHELF_ZONES: {
   category: ClothingCategory;
-  label: string;
   zone: string;
 }[] = [
   { 
     category: 'tops', 
-    label: 'Tops',
-    zone: 'top-[12%] left-[8%] w-[25%] h-[18%]'
+    zone: 'top-[8%] left-[5%] w-[40%] h-[10%]'
   },
   { 
     category: 'bottoms', 
-    label: 'Bottoms',
-    zone: 'top-[12%] left-[33%] w-[22%] h-[18%]'
+    zone: 'top-[18%] left-[15%] w-[45%] h-[16%]'
   },
   { 
     category: 'dresses', 
-    label: 'Dresses & Skirts',
-    zone: 'top-[12%] right-[5%] w-[28%] h-[35%]'
+    zone: 'top-[8%] right-[3%] w-[30%] h-[28%]'
   },
   { 
     category: 'shoes', 
-    label: 'Shoes',
-    zone: 'top-[55%] left-[3%] w-[30%] h-[25%]'
+    zone: 'top-[38%] left-[3%] w-[22%] h-[28%]'
   },
   { 
     category: 'accessories', 
-    label: 'Bags',
-    zone: 'top-[55%] right-[3%] w-[25%] h-[18%]'
-  },
-  { 
-    category: 'outerwear', 
-    label: 'Accessory',
-    zone: 'top-[73%] right-[3%] w-[25%] h-[12%]'
+    zone: 'top-[38%] right-[3%] w-[22%] h-[30%]'
   },
 ];
 
@@ -54,11 +43,10 @@ const Closet = () => {
     setUploadCategory(category);
     setTappedZone(category);
     
-    // Brief visual feedback then open
     setTimeout(() => {
       setTappedZone(null);
       setShowUpload(true);
-    }, 120);
+    }, 100);
   };
 
   const getItemCount = (category: ClothingCategory) => {
@@ -66,18 +54,37 @@ const Closet = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#f5ebe0]">
-      {/* Full Scene Container */}
-      <div className="relative w-full h-full max-w-md mx-auto overflow-hidden">
-        {/* The Complete Illustrated Closet Scene */}
+    <div className="fixed inset-0 bg-[#fdf6ed]">
+      {/* Header overlay */}
+      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-[#fdf6ed] via-[#fdf6ed]/80 to-transparent">
+        <div className="max-w-md mx-auto px-4 pt-3 pb-6">
+          <div className="flex items-center justify-between">
+            <button className="w-10 h-10 flex items-center justify-center text-amber-900/70 hover:text-amber-900 transition-colors">
+              <Menu className="w-6 h-6" strokeWidth={2.5} />
+            </button>
+            
+            <div className="text-center">
+              <h1 className="text-lg font-serif font-bold text-amber-800 tracking-wider">MIRA</h1>
+              <p className="text-sm font-medium text-amber-900">My Closet</p>
+            </div>
+            
+            <button className="w-10 h-10 rounded-full border-2 border-amber-800/30 flex items-center justify-center text-amber-800 hover:bg-amber-100/50 transition-colors">
+              <User className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Full Scene */}
+      <div className="relative w-full h-full max-w-md mx-auto">
         <img 
           src={closetScene}
           alt="My Closet"
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full object-contain object-center pt-16 pb-20"
           draggable={false}
         />
 
-        {/* Invisible Shelf Tap Zones */}
+        {/* Invisible shelf tap zones */}
         {SHELF_ZONES.map(({ category, zone }) => {
           const count = getItemCount(category);
           const isTapped = tappedZone === category;
@@ -86,16 +93,16 @@ const Closet = () => {
             <button
               key={category}
               onClick={() => handleShelfTap(category)}
-              className={`absolute ${zone} transition-all duration-100 rounded-lg ${
+              className={`absolute ${zone} transition-all duration-75 rounded-xl ${
                 isTapped 
-                  ? 'bg-white/25 ring-2 ring-white/40' 
-                  : 'bg-transparent active:bg-white/15'
+                  ? 'bg-white/20 ring-2 ring-amber-400/50' 
+                  : 'bg-transparent active:bg-white/10'
               }`}
+              style={{ marginTop: '64px' }}
               aria-label={`Open ${category}`}
             >
-              {/* Item count badge - only shows if user has added items */}
               {count > 0 && (
-                <span className="absolute -bottom-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-800 text-white text-[11px] font-semibold flex items-center justify-center shadow-md">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
                   {count}
                 </span>
               )}
