@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BottomNav } from '@/components/BottomNav';
-import { AvatarContainer } from '@/components/AvatarContainer';
+import { AvatarContainerTrimmed } from '@/components/AvatarContainerTrimmed';
 import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
@@ -145,7 +145,7 @@ const DressUp = () => {
       <div className="container max-w-md mx-auto px-4 py-4 flex-1 flex flex-col">
         {/* Avatar - Takes remaining space */}
         <div className="flex-1 min-h-[350px] mb-4">
-          <AvatarContainer selectedItems={getSelectedItems()} />
+          <AvatarContainerTrimmed selectedItems={getSelectedItems()} />
         </div>
 
         {/* Category Selector - 3 buttons only */}
