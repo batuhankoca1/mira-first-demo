@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
-import { getItemsByCategory } from '@/data/wardrobeData';
+import { WARDROBE_ITEMS } from '@/data/wardrobeData';
+import { useDemoWardrobeItems } from '@/hooks/useDemoWardrobeItems';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 
 const CategoryDetail = () => {
@@ -18,6 +20,7 @@ const CategoryDetail = () => {
     );
   }
 
+  const { getItemsByCategory } = useDemoWardrobeItems(WARDROBE_ITEMS);
   const items = getItemsByCategory(category as ClothingCategory);
 
   return (

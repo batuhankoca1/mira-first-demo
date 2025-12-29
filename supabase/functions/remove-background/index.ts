@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64 } = await req.json();
-    
+    const { imageBase64, mimeType } = await req.json();
+
     if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: 'No image provided' }),
@@ -30,13 +30,20 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing image for background removal...');
+    // Normalize to a valid image URL for the AI gateway.
+    // - If caller sent a full data URL, keep it.
+    // - If caller sent raw base64, prefix it.
+    const mt = typeof mimeType === 'string' && mimeType.length ? mimeType : 'image/jpeg';
+    const imageUrl = String(imageBase64).startsWith('data:image/')
+      ? String(imageBase64)
+      : `data:${mt};base64,${String(imageBase64)}`;
 
-    // Use Gemini image model to remove background
+    console.log('Processing image for background removal...', { mime: mt, bytes: String(imageBase64).length });
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -47,66 +54,60 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Remove the background from this clothing item photo completely. Make the background fully transparent. Keep only the clothing item with clean edges. Output a PNG with transparent background.'
+                text:
+                  'Remove the background from this clothing item photo completely. Make the background fully transparent. Keep only the clothing item with clean edges. Output a PNG with transparent background.',
               },
               {
                 type: 'image_url',
-                image_url: {
-                  url: imageBase64
-                }
-              }
-            ]
-          }
+                image_url: { url: imageUrl },
+              },
+            ],
+          },
         ],
-        modalities: ['image', 'text']
+        modalities: ['image', 'text'],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI gateway error:', response.status, errorText);
-      
+
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Usage limit reached. Please add credits.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'Usage limit reached. Please add credits.' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-      
-      return new Response(
-        JSON.stringify({ error: 'Failed to process image' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+      return new Response(JSON.stringify({ error: 'Failed to process image' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
-    console.log('AI response received');
 
-    // Extract the processed image
-    const processedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    if (!processedImage) {
+    const imageDataUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageDataUrl || typeof imageDataUrl !== 'string') {
       console.error('No image in response:', JSON.stringify(data));
-      // If AI doesn't return an image, return the original
-      return new Response(
-        JSON.stringify({ processedImage: imageBase64, message: 'Original image returned' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'No image returned by model' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Background removal successful');
 
-    return new Response(
-      JSON.stringify({ processedImage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return new Response(JSON.stringify({ imageDataUrl }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error in remove-background function:', error);
     return new Response(
