@@ -1,11 +1,11 @@
 import { BottomNav } from '@/components/BottomNav';
 import { OutfitSwiper } from '@/components/OutfitSwiper';
-import { useCloset } from '@/hooks/useCloset';
+import { useWardrobe } from '@/hooks/useWardrobe';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const DressUp = () => {
-  const { items, isLoading } = useCloset();
+  const { items, isLoading } = useWardrobe();
 
   return (
     <div className="min-h-screen bg-background pb-28 overflow-y-auto">

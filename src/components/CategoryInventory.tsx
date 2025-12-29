@@ -1,11 +1,12 @@
 import { ClothingItem, ClothingCategory, CATEGORIES } from '@/types/clothing';
+import type { Wardrobe } from '@/hooks/useWardrobe';
 import { Button } from '@/components/ui/button';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CategoryInventoryProps {
   category: ClothingCategory;
-  items: ClothingItem[];
+  wardrobe: Wardrobe;
   onClose: () => void;
   onAddNew: () => void;
   onSelectItem?: (item: ClothingItem) => void;
@@ -14,14 +15,14 @@ interface CategoryInventoryProps {
 
 export function CategoryInventory({
   category,
-  items,
+  wardrobe,
   onClose,
   onAddNew,
   onSelectItem,
   onDeleteItem,
 }: CategoryInventoryProps) {
   const categoryInfo = CATEGORIES.find(c => c.value === category);
-  const categoryItems = items.filter(item => item.category === category);
+  const categoryItems = wardrobe[category] ?? [];
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm animate-fade-in">
