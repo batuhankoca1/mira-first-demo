@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
-import { AvatarContainer } from '@/components/AvatarContainer';
-import { DemoItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/demoCloset';
-import { ClothingCategory, CATEGORIES } from '@/types/clothing';
+import { getItemsByCategory } from '@/data/wardrobeData';
+import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
 
@@ -21,27 +21,20 @@ const SHELF_ZONES: {
 ];
 
 const Closet = () => {
-  const [showInventory, setShowInventory] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>('tops');
+  const navigate = useNavigate();
   const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
 
   const handleShelfTap = (category: ClothingCategory) => {
-    setSelectedCategory(category);
     setTappedZone(category);
-
     setTimeout(() => {
       setTappedZone(null);
-      setShowInventory(true);
+      navigate(`/closet/${category}`);
     }, 100);
   };
 
   const getItemCount = (category: ClothingCategory) => {
     return getItemsByCategory(category).length;
   };
-
-  // Get items for selected category
-  const categoryItems = getItemsByCategory(selectedCategory);
-  const categoryInfo = CATEGORIES.find((c) => c.value === selectedCategory);
 
   return (
     <div className="fixed inset-0 bg-[#fdf6ed]">
@@ -103,51 +96,6 @@ const Closet = () => {
           </div>
         </div>
       </div>
-
-      {/* Category Inventory Modal - Demo items only */}
-      {showInventory && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setShowInventory(false)}>
-          <div 
-            className="w-full max-w-md mx-auto bg-background rounded-t-3xl p-6 pb-8 animate-in slide-in-from-bottom duration-300 mb-20"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <span>{categoryInfo?.icon}</span>
-                {categoryInfo?.label}
-              </h2>
-              <button
-                onClick={() => setShowInventory(false)}
-                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div 
-              className="grid grid-cols-4 gap-3 overflow-y-auto overscroll-contain"
-              style={{ maxHeight: 'calc(50vh - 100px)' }}
-            >
-              {categoryItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="aspect-square rounded-lg bg-secondary overflow-hidden"
-                >
-                  <img
-                    src={item.src}
-                    alt={item.category}
-                    className="w-full h-full object-contain p-1"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <p className="text-center text-sm text-muted-foreground mt-4">
-              {categoryItems.length} demo items • Go to Dress Up to try them on
-            </p>
-          </div>
-        </div>
-      )}
 
       <BottomNav />
     </div>
