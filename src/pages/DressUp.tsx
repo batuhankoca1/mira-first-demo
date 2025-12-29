@@ -17,9 +17,9 @@ interface OutfitState {
 const DressUp = () => {
   const [activeCategory, setActiveCategory] = useState<ClothingCategory>('tops');
   const [outfit, setOutfit] = useState<OutfitState>({
-    tops: null,
-    bottoms: null,
-    bags: null,
+    tops: 0,
+    bottoms: 0,
+    bags: 0,
   });
 
   // Load outfit from localStorage
