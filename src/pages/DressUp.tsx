@@ -7,14 +7,11 @@ import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
 
 const STORAGE_KEY = 'dressup-outfit';
 
+// Simplified to 3 categories only
 interface OutfitState {
   tops: number | null;
   bottoms: number | null;
-  dresses: number | null;
-  jackets: number | null;
-  shoes: number | null;
   bags: number | null;
-  accessories: number | null;
 }
 
 const DressUp = () => {
@@ -22,11 +19,7 @@ const DressUp = () => {
   const [outfit, setOutfit] = useState<OutfitState>({
     tops: null,
     bottoms: null,
-    dresses: null,
-    jackets: null,
-    shoes: null,
     bags: null,
-    accessories: null,
   });
 
   // Load outfit from localStorage
@@ -34,7 +27,13 @@ const DressUp = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setOutfit(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Only load valid keys
+        setOutfit({
+          tops: parsed.tops ?? null,
+          bottoms: parsed.bottoms ?? null,
+          bags: parsed.bags ?? null,
+        });
       }
     } catch {
       // Ignore parse errors
@@ -68,7 +67,7 @@ const DressUp = () => {
           if (current === null) {
             newIndex = 0;
           } else if (current >= items.length - 1) {
-            newIndex = null; // Back to "none"
+            newIndex = null;
           } else {
             newIndex = current + 1;
           }
@@ -93,19 +92,14 @@ const DressUp = () => {
     const newOutfit: OutfitState = {
       tops: null,
       bottoms: null,
-      dresses: null,
-      jackets: null,
-      shoes: null,
       bags: null,
-      accessories: null,
     };
 
     CATEGORY_ORDER.forEach((cat) => {
       const items = getItemsByCategory(cat);
       if (items.length > 0) {
-        // 30% chance of "none" for optional categories
-        const isOptional = ['dresses', 'jackets', 'bags', 'accessories'].includes(cat);
-        if (isOptional && Math.random() < 0.3) {
+        // 30% chance of "none" for bags
+        if (cat === 'bags' && Math.random() < 0.3) {
           newOutfit[cat] = null;
         } else {
           newOutfit[cat] = Math.floor(Math.random() * items.length);
@@ -113,19 +107,13 @@ const DressUp = () => {
       }
     });
 
-    // If dress selected, clear tops/bottoms
-    if (newOutfit.dresses !== null) {
-      newOutfit.tops = null;
-      newOutfit.bottoms = null;
-    }
-
     setOutfit(newOutfit);
   }, []);
 
   // Build selected items map for AvatarContainer
   const getSelectedItems = (): Partial<Record<ClothingCategory, WardrobeItem | null>> => {
     const result: Partial<Record<ClothingCategory, WardrobeItem | null>> = {};
-    
+
     (Object.keys(outfit) as ClothingCategory[]).forEach((cat) => {
       const idx = outfit[cat];
       if (idx !== null) {
@@ -144,7 +132,7 @@ const DressUp = () => {
   const categoryInfo = CATEGORIES.find((c) => c.value === activeCategory);
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-28 flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container max-w-md mx-auto px-6 py-4">
@@ -153,25 +141,25 @@ const DressUp = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container max-w-md mx-auto px-4 py-4 flex flex-col">
-        {/* Avatar - Full height fitting room */}
-        <div className="h-[400px] mb-4">
+      {/* Content - flex-1 to fill available space */}
+      <div className="container max-w-md mx-auto px-4 py-4 flex-1 flex flex-col">
+        {/* Avatar - Takes remaining space */}
+        <div className="flex-1 min-h-[350px] mb-4">
           <AvatarContainer selectedItems={getSelectedItems()} />
         </div>
 
-        {/* Category Selector - Horizontal Scroll */}
-        <div className="mb-4 -mx-4 px-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Category Selector - 3 buttons only */}
+        <div className="mb-4">
+          <div className="flex gap-2 justify-center">
             {CATEGORIES.map(({ value, label, icon }) => {
               const isActive = activeCategory === value;
               const hasItem = outfit[value] !== null;
-              
+
               return (
                 <button
                   key={value}
                   onClick={() => setActiveCategory(value)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-md'
                       : hasItem
@@ -198,9 +186,9 @@ const DressUp = () => {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            {/* Items Row - Horizontal Scroll */}
+            {/* Items Row */}
             <div className="flex-1 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center">
                 {/* None option */}
                 <button
                   onClick={() => selectItem(null)}

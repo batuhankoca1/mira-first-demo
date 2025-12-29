@@ -1,4 +1,4 @@
-import { WardrobeItem, CATEGORY_ORDER } from '@/data/wardrobeData';
+import { WardrobeItem } from '@/data/wardrobeData';
 import { ClothingCategory } from '@/types/clothing';
 import baseAvatar from '@/assets/base-avatar.png';
 
@@ -7,55 +7,49 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Reference dimensions for positioning calculations
-const REFERENCE_WIDTH = 300;
-const REFERENCE_HEIGHT = 600;
-
-// Z-index for each layer (strict order per spec)
-const Z_INDEX: Record<ClothingCategory, number> = {
-  shoes: 5,
-  bottoms: 10,
-  tops: 20,
-  dresses: 25,
-  jackets: 30,
-  bags: 35,
-  accessories: 40,
+// Hardcoded positioning for each category (percentage-based)
+const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
+  tops: {
+    position: 'absolute',
+    top: '28%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '35%',
+    zIndex: 20,
+  },
+  bottoms: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '32%',
+    zIndex: 10,
+  },
+  bags: {
+    position: 'absolute',
+    top: '45%',
+    left: '65%',
+    width: '25%',
+    zIndex: 30,
+  },
 };
 
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
-  // Get active items in z-order
-  const activeItems = CATEGORY_ORDER.map((cat) => selectedItems[cat]).filter(
-    (item): item is WardrobeItem => item !== null && item !== undefined
-  );
-
-  // If dress is selected, hide tops and bottoms visually
-  const hasDress = selectedItems.dresses != null;
-  const filteredItems = activeItems.filter((item) => {
-    if (hasDress && (item.category === 'tops' || item.category === 'bottoms')) {
-      return false;
-    }
-    return true;
-  });
-
-  // Render a single clothing layer
-  const renderClothingLayer = (item: WardrobeItem) => {
-    // Convert to percentage-based positioning
-    const leftPercent = ((item.anchorX + item.offsetX - item.width / 2) / REFERENCE_WIDTH) * 100;
-    const topPercent = ((item.anchorY + item.offsetY - item.width / 2) / REFERENCE_HEIGHT) * 100;
-    const widthPercent = (item.width / REFERENCE_WIDTH) * 100;
+  // Render a clothing layer with hardcoded positioning
+  const renderClothingLayer = (category: ClothingCategory) => {
+    const item = selectedItems[category];
+    if (!item) return null;
 
     return (
       <img
         key={item.id}
         src={item.src}
-        alt={item.category}
-        className="absolute object-contain pointer-events-none transition-all duration-150"
+        alt={category}
+        className="pointer-events-none"
         style={{
-          left: `${leftPercent}%`,
-          top: `${topPercent}%`,
-          width: `${widthPercent}%`,
+          ...LAYER_STYLES[category],
+          mixBlendMode: 'multiply', // Makes white backgrounds transparent
           height: 'auto',
-          zIndex: Z_INDEX[item.category],
         }}
         draggable={false}
       />
@@ -63,18 +57,10 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
   };
 
   return (
-    <div
-      className={`relative flex justify-center items-end h-full w-full ${className}`}
-    >
-      {/* Inner wrapper that maintains aspect ratio */}
-      <div 
-        className="relative"
-        style={{ 
-          height: '90%',
-          aspectRatio: `${REFERENCE_WIDTH} / ${REFERENCE_HEIGHT}`,
-        }}
-      >
-        {/* Base Avatar - ALWAYS visible */}
+    <div className={`relative flex justify-center items-end h-full w-full ${className}`}>
+      {/* Inner wrapper maintains aspect ratio */}
+      <div className="relative h-[90%]" style={{ aspectRatio: '1 / 2' }}>
+        {/* Base Avatar - ALWAYS visible, z-index 0 */}
         <img
           src={baseAvatar}
           alt="Base Avatar"
@@ -83,8 +69,10 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
           draggable={false}
         />
 
-        {/* Clothing layers overlay */}
-        {filteredItems.map(renderClothingLayer)}
+        {/* Clothing layers - hardcoded positions */}
+        {renderClothingLayer('bottoms')}
+        {renderClothingLayer('tops')}
+        {renderClothingLayer('bags')}
       </div>
     </div>
   );
