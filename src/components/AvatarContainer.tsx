@@ -7,7 +7,7 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Reference container dimensions for positioning calculations
+// Reference dimensions for positioning calculations
 const REFERENCE_WIDTH = 300;
 const REFERENCE_HEIGHT = 600;
 
@@ -16,42 +16,13 @@ const Z_INDEX: Record<ClothingCategory, number> = {
   shoes: 5,
   bottoms: 10,
   tops: 20,
-  dresses: 25, // Dresses go over tops+bottoms visually
+  dresses: 25,
   jackets: 30,
   bags: 35,
   accessories: 40,
 };
 
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
-  // Render a single clothing layer with percentage-based positioning
-  const renderClothingLayer = (item: WardrobeItem) => {
-    // Convert fixed pixel values to percentages for responsive scaling
-    const leftPercent = ((item.anchorX + item.offsetX - item.width / 2) / REFERENCE_WIDTH) * 100;
-    const topPercent = ((item.anchorY + item.offsetY - item.width / 2) / REFERENCE_HEIGHT) * 100;
-    const widthPercent = (item.width / REFERENCE_WIDTH) * 100;
-
-    return (
-      <div
-        key={item.id}
-        className="absolute transition-all duration-150 ease-out pointer-events-none"
-        style={{
-          left: `${leftPercent}%`,
-          top: `${topPercent}%`,
-          width: `${widthPercent}%`,
-          aspectRatio: '1 / 1',
-          zIndex: Z_INDEX[item.category],
-        }}
-      >
-        <img
-          src={item.src}
-          alt={item.category}
-          className="w-full h-full object-contain"
-          draggable={false}
-        />
-      </div>
-    );
-  };
-
   // Get active items in z-order
   const activeItems = CATEGORY_ORDER.map((cat) => selectedItems[cat]).filter(
     (item): item is WardrobeItem => item !== null && item !== undefined
@@ -66,25 +37,53 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
     return true;
   });
 
+  // Render a single clothing layer
+  const renderClothingLayer = (item: WardrobeItem) => {
+    // Convert to percentage-based positioning
+    const leftPercent = ((item.anchorX + item.offsetX - item.width / 2) / REFERENCE_WIDTH) * 100;
+    const topPercent = ((item.anchorY + item.offsetY - item.width / 2) / REFERENCE_HEIGHT) * 100;
+    const widthPercent = (item.width / REFERENCE_WIDTH) * 100;
+
+    return (
+      <img
+        key={item.id}
+        src={item.src}
+        alt={item.category}
+        className="absolute object-contain pointer-events-none transition-all duration-150"
+        style={{
+          left: `${leftPercent}%`,
+          top: `${topPercent}%`,
+          width: `${widthPercent}%`,
+          height: 'auto',
+          zIndex: Z_INDEX[item.category],
+        }}
+        draggable={false}
+      />
+    );
+  };
+
   return (
     <div
-      className={`relative flex items-end justify-center w-full h-full ${className}`}
+      className={`relative flex justify-center items-end h-full w-full ${className}`}
     >
-      {/* Inner container maintains aspect ratio */}
+      {/* Inner wrapper that maintains aspect ratio */}
       <div 
-        className="relative h-[90%] max-h-full"
-        style={{ aspectRatio: `${REFERENCE_WIDTH} / ${REFERENCE_HEIGHT}` }}
+        className="relative"
+        style={{ 
+          height: '90%',
+          aspectRatio: `${REFERENCE_WIDTH} / ${REFERENCE_HEIGHT}`,
+        }}
       >
-        {/* Base Avatar - anime style image */}
+        {/* Base Avatar - ALWAYS visible */}
         <img
           src={baseAvatar}
-          alt="Avatar"
-          className="absolute inset-0 w-full h-full object-contain"
+          alt="Base Avatar"
+          className="relative w-full h-full object-contain"
           style={{ zIndex: 0 }}
           draggable={false}
         />
 
-        {/* Clothing layers */}
+        {/* Clothing layers overlay */}
         {filteredItems.map(renderClothingLayer)}
       </div>
     </div>
