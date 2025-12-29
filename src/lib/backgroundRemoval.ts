@@ -38,16 +38,13 @@ function clamp01(x: number) {
   return x < 0 ? 0 : x > 1 ? 1 : x;
 }
 
-// The segmentation pipeline may return different mask encodings.
-// We normalize everything into a Float32Array in [0..1] of length width*height.
+// Normalize mask to Float32 [0..1] length width*height
 function toFloatMask(maskData: any, expectedLength: number): Float32Array {
-  // Common case: Float32Array already
   if (maskData instanceof Float32Array) {
     if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
     return maskData;
   }
 
-  // Common case: Uint8ClampedArray (0..255)
   if (maskData instanceof Uint8ClampedArray || maskData instanceof Uint8Array) {
     if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
     const out = new Float32Array(expectedLength);
@@ -55,7 +52,6 @@ function toFloatMask(maskData: any, expectedLength: number): Float32Array {
     return out;
   }
 
-  // Sometimes the mask is wrapped (e.g. Tensor-like)
   const maybe = maskData?.data ?? maskData?.value ?? maskData;
   if (maybe instanceof Float32Array) return toFloatMask(maybe, expectedLength);
   if (maybe instanceof Uint8ClampedArray || maybe instanceof Uint8Array) return toFloatMask(maybe, expectedLength);
@@ -107,10 +103,7 @@ const BG_LABELS = new Set([
 
 type BBox = { minX: number; minY: number; maxX: number; maxY: number };
 
-function computeBoundingBoxFromAlpha(
-  rgbaCanvas: HTMLCanvasElement,
-  alphaThreshold = 10
-): BBox {
+function computeBoundingBoxFromAlpha(rgbaCanvas: HTMLCanvasElement, alphaThreshold = 10): BBox {
   const ctx = rgbaCanvas.getContext("2d")!;
   const { width, height } = rgbaCanvas;
   const img = ctx.getImageData(0, 0, width, height);
@@ -139,24 +132,173 @@ function computeBoundingBoxFromAlpha(
   return { minX, minY, maxX, maxY };
 }
 
-// Garment integrity rule: never erode. We ONLY expand/fill small holes.
-function fillSmallHoles(mask: Float32Array, width: number, height: number): Float32Array {
-  const out = new Float32Array(mask.length);
-  // 1 pass dilation-ish: take max of neighborhood and original
+// ------------- Garment-first mask utilities -------------
+
+function makeBinaryMask(mask: Float32Array, threshold: number): Uint8Array {
+  const out = new Uint8Array(mask.length);
+  for (let i = 0; i < mask.length; i++) out[i] = mask[i] >= threshold ? 1 : 0;
+  return out;
+}
+
+function dilateBinary(bin: Uint8Array, width: number, height: number, radius = 1): Uint8Array {
+  const out = new Uint8Array(bin.length);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const i = y * width + x;
-      let m = mask[i];
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const ny = y + dy;
+      let v = 0;
+      for (let dy = -radius; dy <= radius && !v; dy++) {
+        const ny = y + dy;
+        if (ny < 0 || ny >= height) continue;
+        for (let dx = -radius; dx <= radius; dx++) {
           const nx = x + dx;
-          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-          m = Math.max(m, mask[ny * width + nx]);
+          if (nx < 0 || nx >= width) continue;
+          if (bin[ny * width + nx]) {
+            v = 1;
+            break;
+          }
         }
       }
-      // keep extra pixels: never less than original
-      out[i] = Math.max(mask[i], m);
+      out[y * width + x] = v;
+    }
+  }
+  return out;
+}
+
+// Keep only the largest connected component (garment as a single solid object)
+function largestConnectedComponent(bin: Uint8Array, width: number, height: number) {
+  const visited = new Uint8Array(bin.length);
+  const keep = new Uint8Array(bin.length);
+
+  let bestCount = 0;
+  let bestPixels: Uint8Array | null = null;
+
+  const queue = new Int32Array(bin.length);
+
+  for (let i = 0; i < bin.length; i++) {
+    if (!bin[i] || visited[i]) continue;
+
+    let qh = 0;
+    let qt = 0;
+    queue[qt++] = i;
+    visited[i] = 1;
+
+    const pixels = new Uint8Array(bin.length);
+    let count = 0;
+
+    while (qh < qt) {
+      const idx = queue[qh++];
+      pixels[idx] = 1;
+      count++;
+
+      const x = idx % width;
+      const y = (idx / width) | 0;
+
+      const n1 = x > 0 ? idx - 1 : -1;
+      const n2 = x < width - 1 ? idx + 1 : -1;
+      const n3 = y > 0 ? idx - width : -1;
+      const n4 = y < height - 1 ? idx + width : -1;
+
+      if (n1 >= 0 && bin[n1] && !visited[n1]) {
+        visited[n1] = 1;
+        queue[qt++] = n1;
+      }
+      if (n2 >= 0 && bin[n2] && !visited[n2]) {
+        visited[n2] = 1;
+        queue[qt++] = n2;
+      }
+      if (n3 >= 0 && bin[n3] && !visited[n3]) {
+        visited[n3] = 1;
+        queue[qt++] = n3;
+      }
+      if (n4 >= 0 && bin[n4] && !visited[n4]) {
+        visited[n4] = 1;
+        queue[qt++] = n4;
+      }
+    }
+
+    if (count > bestCount) {
+      bestCount = count;
+      bestPixels = pixels;
+    }
+  }
+
+  if (!bestPixels || bestCount === 0) {
+    return { keep, area: 0 };
+  }
+
+  keep.set(bestPixels);
+  return { keep, area: bestCount };
+}
+
+// Fill internal holes in a binary mask (guarantee no holes inside garment)
+function fillHoles(bin: Uint8Array, width: number, height: number): Uint8Array {
+  // Flood fill background from borders; anything not reached and not garment is a hole.
+  const visited = new Uint8Array(bin.length);
+  const queue = new Int32Array(bin.length);
+  let qt = 0;
+
+  const pushIfBg = (x: number, y: number) => {
+    const idx = y * width + x;
+    if (visited[idx]) return;
+    if (bin[idx]) return; // garment
+    visited[idx] = 1;
+    queue[qt++] = idx;
+  };
+
+  // borders
+  for (let x = 0; x < width; x++) {
+    pushIfBg(x, 0);
+    pushIfBg(x, height - 1);
+  }
+  for (let y = 0; y < height; y++) {
+    pushIfBg(0, y);
+    pushIfBg(width - 1, y);
+  }
+
+  let qh = 0;
+  while (qh < qt) {
+    const idx = queue[qh++];
+    const x = idx % width;
+    const y = (idx / width) | 0;
+
+    const left = x > 0 ? idx - 1 : -1;
+    const right = x < width - 1 ? idx + 1 : -1;
+    const up = y > 0 ? idx - width : -1;
+    const down = y < height - 1 ? idx + width : -1;
+
+    if (left >= 0 && !visited[left] && !bin[left]) {
+      visited[left] = 1;
+      queue[qt++] = left;
+    }
+    if (right >= 0 && !visited[right] && !bin[right]) {
+      visited[right] = 1;
+      queue[qt++] = right;
+    }
+    if (up >= 0 && !visited[up] && !bin[up]) {
+      visited[up] = 1;
+      queue[qt++] = up;
+    }
+    if (down >= 0 && !visited[down] && !bin[down]) {
+      visited[down] = 1;
+      queue[qt++] = down;
+    }
+  }
+
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    // if it's garment already OR it's a hole (background not reachable from border)
+    out[i] = bin[i] || !visited[i] ? 1 : 0;
+  }
+  return out;
+}
+
+function binaryToSoftAlpha(bin: Uint8Array, softBase: Float32Array): Float32Array {
+  const out = new Float32Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    if (bin[i]) {
+      // prefer false positives: ensure a minimum alpha for kept pixels
+      out[i] = Math.max(0.65, softBase[i]);
+    } else {
+      out[i] = 0;
     }
   }
   return out;
@@ -199,7 +341,6 @@ function cropPadCenterTo400(srcCanvas: HTMLCanvasElement, bbox: BBox): HTMLCanva
   out.height = AVATAR_ASSET_SIZE;
   const octx = out.getContext("2d")!;
 
-  // Fit within 400x400, keep aspect
   const maxSize = AVATAR_ASSET_SIZE * 0.92;
   const scale = Math.min(maxSize / cropW, maxSize / cropH);
   const drawW = cropW * scale;
@@ -208,6 +349,24 @@ function cropPadCenterTo400(srcCanvas: HTMLCanvasElement, bbox: BBox): HTMLCanva
   const dy = (AVATAR_ASSET_SIZE - drawH) / 2;
 
   octx.drawImage(cropped, dx, dy, drawW, drawH);
+  return out;
+}
+
+function makeSpriteNoMask(rgbCanvas: HTMLCanvasElement): HTMLCanvasElement {
+  // Fallback: keep original pixels (no masking), but still output a centered 400x400 sprite.
+  // Background will remain inside the crop, but outside the sprite is transparent.
+  const out = document.createElement("canvas");
+  out.width = AVATAR_ASSET_SIZE;
+  out.height = AVATAR_ASSET_SIZE;
+  const ctx = out.getContext("2d")!;
+
+  const maxSize = AVATAR_ASSET_SIZE * 0.92;
+  const scale = Math.min(maxSize / rgbCanvas.width, maxSize / rgbCanvas.height);
+  const drawW = rgbCanvas.width * scale;
+  const drawH = rgbCanvas.height * scale;
+  const dx = (AVATAR_ASSET_SIZE - drawW) / 2;
+  const dy = (AVATAR_ASSET_SIZE - drawH) / 2;
+  ctx.drawImage(rgbCanvas, dx, dy, drawW, drawH);
   return out;
 }
 
@@ -223,7 +382,6 @@ export async function processClothingFile(
 ): Promise<{ assetBlob: Blob; assetDataUrl: string; debug: ClothingDebugViews }> {
   onProgress?.("Decoding image...");
 
-  // Properly decode WEBP/etc to full-resolution pixels
   const bitmap = await createImageBitmap(file);
 
   const { width: infW, height: infH } = fitWithinMaxDim(
@@ -249,7 +407,7 @@ export async function processClothingFile(
 
   const expectedLen = infW * infH;
 
-  // Build background-union mask
+  // Background union (soft)
   const bgUnion = new Float32Array(expectedLen);
   let bgCount = 0;
 
@@ -257,24 +415,20 @@ export async function processClothingFile(
     const label = String(seg?.label ?? "").toLowerCase();
     const raw = seg?.mask?.data;
     if (!raw) continue;
-
     const m = toFloatMask(raw, expectedLen);
 
     if (BG_LABELS.has(label)) {
       bgCount++;
-      for (let i = 0; i < expectedLen; i++) {
-        bgUnion[i] = Math.max(bgUnion[i], m[i]);
-      }
+      for (let i = 0; i < expectedLen; i++) bgUnion[i] = Math.max(bgUnion[i], m[i]);
     }
   }
 
-  // Foreground = NOT background (prefer keeping pixels)
-  const fg = new Float32Array(expectedLen);
-
+  // Foreground soft mask: prefer keeping pixels.
+  const fgSoft = new Float32Array(expectedLen);
   if (bgCount > 0) {
-    for (let i = 0; i < expectedLen; i++) fg[i] = clamp01(1 - bgUnion[i]);
+    for (let i = 0; i < expectedLen; i++) fgSoft[i] = clamp01(1 - bgUnion[i]);
   } else {
-    // If background labels are not present, fallback to union of all segments
+    // Fallback union of all segments (then decide invert)
     const union = new Float32Array(expectedLen);
     for (const seg of Array.isArray(segments) ? segments : []) {
       const raw = seg?.mask?.data;
@@ -283,27 +437,68 @@ export async function processClothingFile(
       for (let i = 0; i < expectedLen; i++) union[i] = Math.max(union[i], m[i]);
     }
 
-    // If union is mostly 1, it's likely background; invert.
     let mean = 0;
     for (let i = 0; i < expectedLen; i++) mean += union[i];
     mean /= expectedLen;
-
     const inverted = mean > 0.6;
-    for (let i = 0; i < expectedLen; i++) fg[i] = clamp01(inverted ? 1 - union[i] : union[i]);
+    for (let i = 0; i < expectedLen; i++) fgSoft[i] = clamp01(inverted ? 1 - union[i] : union[i]);
   }
 
-  // Fill small holes (never erode)
-  const fgFilled = fillSmallHoles(fg, infW, infH);
+  // ---- Garment-first: make a single solid silhouette ----
+  // Very low threshold: we prefer false positives.
+  const bin0 = makeBinaryMask(fgSoft, 0.12);
+
+  // Keep ONE solid object: largest component.
+  const { keep, area } = largestConnectedComponent(bin0, infW, infH);
+
+  // Confidence check: if foreground is too tiny, masking is unreliable.
+  const areaRatio = area / expectedLen;
+  const lowConfidence = areaRatio < 0.01;
+
+  if (lowConfidence) {
+    console.warn("[BG Removal] Low confidence mask; using NO-MASK fallback", { areaRatio });
+
+    const sprite = makeSpriteNoMask(rgbCanvas);
+    const maskCanvas = maskToGrayscaleCanvas(fgSoft, infW, infH);
+    const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
+
+    const composedDataUrl = canvasToDataURL(rgbCanvas, "image/png");
+
+    const assetBlob = await new Promise<Blob>((resolve, reject) => {
+      sprite.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
+        "image/png",
+        1.0
+      );
+    });
+
+    const assetDataUrl = await blobToBase64(assetBlob);
+
+    return {
+      assetBlob,
+      assetDataUrl,
+      debug: { originalDataUrl, maskDataUrl, composedDataUrl },
+    };
+  }
+
+  // Fill holes inside the garment.
+  const keepFilled = fillHoles(keep, infW, infH);
+
+  // Gentle dilation to avoid cutting sleeves/collars.
+  const keepPadded = dilateBinary(keepFilled, infW, infH, 1);
+
+  // Build final alpha mask (soft + minimum alpha for kept pixels)
+  const alpha = binaryToSoftAlpha(keepPadded, fgSoft);
 
   // Compose RGBA
-  composeRGBA(rgbCanvas, fgFilled);
+  composeRGBA(rgbCanvas, alpha);
   const composedDataUrl = canvasToDataURL(rgbCanvas, "image/png");
 
-  // Debug mask view (foreground mask)
-  const maskCanvas = maskToGrayscaleCanvas(fgFilled, infW, infH);
+  // Debug mask view is final alpha
+  const maskCanvas = maskToGrayscaleCanvas(alpha, infW, infH);
   const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
 
-  // Crop based on alpha (very forgiving threshold)
+  // Crop based on alpha (forgiving)
   const bbox = computeBoundingBoxFromAlpha(rgbCanvas, 8);
 
   onProgress?.("Preparing wearable asset...");
