@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ClothingCategory } from "@/types/clothing";
 import type { WardrobeItem } from "@/data/wardrobeData";
 
-const LS_KEY = "demo-cutouts-v2"; // bumped to force re-process after edge fix
+const LS_KEY = "demo-cutouts-v3"; // bumped after RLS policy fix
 
 type CutoutMap = Record<string, string>; // id -> public URL
 
