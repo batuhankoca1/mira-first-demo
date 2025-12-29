@@ -5,11 +5,101 @@ interface Avatar2DProps {
   top?: ClothingItem;
   bottom?: ClothingItem;
   dress?: ClothingItem;
+  jacket?: ClothingItem;
   shoes?: ClothingItem;
+  bag?: ClothingItem;
+  accessory?: ClothingItem;
   className?: string;
 }
 
-export function Avatar2D({ top, bottom, dress, shoes, className }: Avatar2DProps) {
+// Fixed layer positions for each category (percentage-based for responsiveness)
+const LAYER_STYLES: Record<string, React.CSSProperties> = {
+  dress: {
+    top: '22%',
+    height: '50%',
+    width: '55%',
+  },
+  top: {
+    top: '22%',
+    height: '28%',
+    width: '50%',
+  },
+  jacket: {
+    top: '20%',
+    height: '32%',
+    width: '58%',
+  },
+  bottom: {
+    top: '48%',
+    height: '26%',
+    width: '45%',
+  },
+  shoes: {
+    top: '88%',
+    height: '12%',
+    width: '35%',
+  },
+  bag: {
+    top: '40%',
+    right: '5%',
+    left: 'auto',
+    height: '20%',
+    width: '25%',
+  },
+  accessory: {
+    top: '5%',
+    height: '15%',
+    width: '30%',
+  },
+};
+
+export function Avatar2D({ 
+  top, 
+  bottom, 
+  dress, 
+  jacket,
+  shoes, 
+  bag,
+  accessory,
+  className 
+}: Avatar2DProps) {
+  // Render a clothing layer
+  const renderLayer = (
+    item: ClothingItem | undefined, 
+    layerKey: string,
+    zIndex: number
+  ) => {
+    if (!item) return null;
+    
+    const style = LAYER_STYLES[layerKey];
+    const itemScale = item.scale ?? 1;
+    const offset = item.anchorOffset ?? { x: 0, y: 0 };
+    
+    return (
+      <div 
+        key={layerKey}
+        className="absolute flex items-center justify-center"
+        style={{ 
+          ...style,
+          left: style.left ?? '50%',
+          transform: `translateX(${style.left ? 0 : -50}%) translateX(${offset.x}px) translateY(${offset.y}px) scale(${itemScale})`,
+          zIndex,
+        }}
+      >
+        <img
+          src={item.imageUrl}
+          alt={layerKey}
+          className="w-full h-full object-contain animate-scale-in"
+          style={{ 
+            mixBlendMode: 'multiply',
+            imageRendering: 'auto',
+          }}
+          draggable={false}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className={cn("relative w-full max-w-[280px] mx-auto", className)}>
       {/* Avatar silhouette */}
@@ -59,50 +149,27 @@ export function Avatar2D({ top, bottom, dress, shoes, className }: Avatar2DProps
         <ellipse cx="120" cy="380" rx="20" ry="10" className="fill-card stroke-border" strokeWidth="2" />
       </svg>
 
-      {/* Clothing overlays */}
-      {dress && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ top: '22%', height: '50%' }}>
-          <img
-            src={dress.imageUrl}
-            alt="Dress"
-            className="w-[50%] h-full object-contain animate-scale-in"
-            style={{ mixBlendMode: 'multiply' }}
-          />
-        </div>
-      )}
-
-      {!dress && top && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ top: '22%', height: '28%' }}>
-          <img
-            src={top.imageUrl}
-            alt="Top"
-            className="w-[50%] h-full object-contain animate-scale-in"
-            style={{ mixBlendMode: 'multiply' }}
-          />
-        </div>
-      )}
-
-      {!dress && bottom && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ top: '48%', height: '25%' }}>
-          <img
-            src={bottom.imageUrl}
-            alt="Bottom"
-            className="w-[45%] h-full object-contain animate-scale-in"
-            style={{ mixBlendMode: 'multiply' }}
-          />
-        </div>
-      )}
-
-      {shoes && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ top: '88%', height: '12%' }}>
-          <img
-            src={shoes.imageUrl}
-            alt="Shoes"
-            className="w-[35%] h-full object-contain animate-scale-in"
-            style={{ mixBlendMode: 'multiply' }}
-          />
-        </div>
-      )}
+      {/* Clothing layers - ordered by z-index */}
+      {/* Bottom layer (pants/skirt) */}
+      {!dress && renderLayer(bottom, 'bottom', 10)}
+      
+      {/* Dress (replaces top + bottom) */}
+      {renderLayer(dress, 'dress', 15)}
+      
+      {/* Top layer */}
+      {!dress && renderLayer(top, 'top', 20)}
+      
+      {/* Jacket layer (over top) */}
+      {renderLayer(jacket, 'jacket', 25)}
+      
+      {/* Shoes */}
+      {renderLayer(shoes, 'shoes', 5)}
+      
+      {/* Bag (side accessory) */}
+      {renderLayer(bag, 'bag', 30)}
+      
+      {/* Accessory (head/neck) */}
+      {renderLayer(accessory, 'accessory', 35)}
     </div>
   );
 }

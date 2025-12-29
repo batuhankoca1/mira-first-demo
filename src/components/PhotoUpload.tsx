@@ -37,7 +37,7 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
     setDebug(null);
 
     try {
-      // Show original immediately (fast feedback)
+      // Show original immediately for fast feedback
       const originalObjectUrl = URL.createObjectURL(file);
       setPreviewUrl(originalObjectUrl);
 
@@ -45,13 +45,18 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
         setProcessingStatus(status);
       });
 
+      // Clean up object URL
+      URL.revokeObjectURL(originalObjectUrl);
+
       setDebug(dbg);
       setAssetDataUrl(ready);
       setPreviewUrl(ready);
       setIsReadyToSave(true);
+      
+      console.log("[PhotoUpload] Processing complete, ready to save");
     } catch (err) {
-      console.error('Processing error:', err);
-      toast.error('Background removal failed. Please try another photo.');
+      console.error('[PhotoUpload] Processing error:', err);
+      toast.error('Arka plan temizleme başarısız. Lütfen başka bir fotoğraf deneyin.');
       setPreviewUrl(null);
       setAssetDataUrl(null);
       setDebug(null);
@@ -62,9 +67,18 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
   };
 
   const handleSave = () => {
-    if (!assetDataUrl) return;
+    if (!assetDataUrl) {
+      console.error("[PhotoUpload] No asset to save");
+      return;
+    }
+    
+    console.log("[PhotoUpload] Saving item to category:", selectedCategory);
+    
+    // Call the save callback
     onSaved(assetDataUrl, selectedCategory);
-    toast.success(`Saved to ${CATEGORIES.find(c => c.value === selectedCategory)?.label ?? selectedCategory}`);
+    
+    const categoryLabel = CATEGORIES.find(c => c.value === selectedCategory)?.label ?? selectedCategory;
+    toast.success(`${categoryLabel} kategorisine kaydedildi`);
   };
 
   const handleRetake = () => {
@@ -81,8 +95,8 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
       <div className="flex flex-col h-full max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-serif font-semibold">Add Item</h2>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing} aria-label="Close">
+          <h2 className="text-xl font-serif font-semibold">Kıyafet Ekle</h2>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing} aria-label="Kapat">
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -124,9 +138,9 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
                 <div className="w-20 h-20 rounded-full bg-card flex items-center justify-center shadow-soft">
                   <Camera className="w-8 h-8" />
                 </div>
-                <p className="font-medium">Choose Photo</p>
+                <p className="font-medium">Fotoğraf Seç</p>
                 <p className="text-sm text-center px-4 text-muted-foreground">
-                  We'll remove the background and turn it into a wearable 400×400 sprite
+                  Arka plan otomatik temizlenecek
                 </p>
               </div>
             )}
@@ -140,23 +154,23 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
             />
           </div>
 
-          {/* Temporary debug view */}
+          {/* Debug view - temporary for testing */}
           {debug && (
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="space-y-1">
-                <p className="text-[11px] text-muted-foreground">Original</p>
+                <p className="text-[11px] text-muted-foreground text-center">Orijinal</p>
                 <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
                   <img src={debug.originalDataUrl} alt="Original" className="w-full h-full object-contain" />
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] text-muted-foreground">Mask</p>
+                <p className="text-[11px] text-muted-foreground text-center">Maske</p>
                 <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
                   <img src={debug.maskDataUrl} alt="Mask" className="w-full h-full object-contain" />
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] text-muted-foreground">Composed</p>
+                <p className="text-[11px] text-muted-foreground text-center">Sonuç</p>
                 <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
                   <img src={debug.composedDataUrl} alt="Composed" className="w-full h-full object-contain" />
                 </div>
@@ -166,7 +180,7 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
 
           {/* Category Selection */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">Category</p>
+            <p className="text-sm font-medium text-muted-foreground">Kategori</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -186,31 +200,41 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: Phot
               ))}
             </div>
           </div>
+
+          {/* Ready indicator */}
+          {isReadyToSave && (
+            <div className="mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm text-center">
+              ✓ Kıyafet hazır! Aşağıdan kaydet.
+            </div>
+          )}
         </div>
 
-        {/* Fixed bottom actions (always visible, above tab bar) */}
+        {/* Fixed bottom actions - ALWAYS visible */}
         <div className="p-4 border-t border-border bg-background pb-safe">
           <div className="flex gap-3">
             {previewUrl && (
               <Button variant="secondary" className="flex-1" onClick={handleRetake} disabled={isProcessing}>
-                Choose Again
+                Yeniden Seç
               </Button>
             )}
             <Button
               variant="default"
-              className="flex-1 gap-2"
+              className={cn(
+                "flex-1 gap-2",
+                isReadyToSave && "bg-green-600 hover:bg-green-700"
+              )}
               disabled={!isReadyToSave || isProcessing}
               onClick={handleSave}
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {processingStatus || 'Processing...'}
+                  {processingStatus || 'İşleniyor...'}
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Save Item
+                  Kaydet
                 </>
               )}
             </Button>
