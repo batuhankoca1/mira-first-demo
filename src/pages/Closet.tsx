@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
-import { PhotoUpload } from '@/components/PhotoUpload';
-import { CategoryInventory } from '@/components/CategoryInventory';
-import { useWardrobe } from '@/hooks/useWardrobe';
-import { ClothingCategory } from '@/types/clothing';
+import { AvatarContainer } from '@/components/AvatarContainer';
+import { DemoItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/demoCloset';
+import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
 
@@ -22,8 +21,6 @@ const SHELF_ZONES: {
 ];
 
 const Closet = () => {
-  const { wardrobe, addItem, removeItem } = useWardrobe();
-  const [showUpload, setShowUpload] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>('tops');
   const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
@@ -38,29 +35,13 @@ const Closet = () => {
     }, 100);
   };
 
-  const handleAddNew = () => {
-    setShowInventory(false);
-    setShowUpload(true);
-  };
-
-  const handleSaved = (
-    imageUrl: string,
-    category: ClothingCategory,
-    overrides?: { scale?: number; anchorOffset?: { x: number; y: number } }
-  ) => {
-    addItem(imageUrl, category, overrides);
-    setShowUpload(false);
-    setSelectedCategory(category);
-    setShowInventory(true);
-  };
-
-  const handleDeleteItem = (id: string) => {
-    removeItem(id);
-  };
-
   const getItemCount = (category: ClothingCategory) => {
-    return wardrobe[category]?.length ?? 0;
+    return getItemsByCategory(category).length;
   };
+
+  // Get items for selected category
+  const categoryItems = getItemsByCategory(selectedCategory);
+  const categoryInfo = CATEGORIES.find((c) => c.value === selectedCategory);
 
   return (
     <div className="fixed inset-0 bg-[#fdf6ed]">
@@ -123,24 +104,43 @@ const Closet = () => {
         </div>
       </div>
 
-      {/* Category Inventory Modal */}
+      {/* Category Inventory Modal - Demo items only */}
       {showInventory && (
-        <CategoryInventory
-          category={selectedCategory}
-          wardrobe={wardrobe}
-          onClose={() => setShowInventory(false)}
-          onAddNew={handleAddNew}
-          onDeleteItem={handleDeleteItem}
-        />
-      )}
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
+          <div className="w-full max-w-md mx-auto bg-background rounded-t-3xl p-6 animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span>{categoryInfo?.icon}</span>
+                {categoryInfo?.label}
+              </h2>
+              <button
+                onClick={() => setShowInventory(false)}
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
 
-      {/* Upload Modal */}
-      {showUpload && (
-        <PhotoUpload
-          onSaved={handleSaved}
-          onClose={() => setShowUpload(false)}
-          defaultCategory={selectedCategory}
-        />
+            <div className="grid grid-cols-4 gap-3 max-h-[300px] overflow-y-auto">
+              {categoryItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="aspect-square rounded-lg bg-secondary overflow-hidden"
+                >
+                  <img
+                    src={item.imageUrl}
+                    alt={item.category}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              {categoryItems.length} demo items • Go to Dress Up to try them on
+            </p>
+          </div>
+        </div>
       )}
 
       <BottomNav />
