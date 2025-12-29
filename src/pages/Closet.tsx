@@ -43,8 +43,12 @@ const Closet = () => {
     setShowUpload(true);
   };
 
-  const handleSaved = (imageUrl: string, category: ClothingCategory) => {
-    addItem(imageUrl, category);
+  const handleSaved = (
+    imageUrl: string,
+    category: ClothingCategory,
+    overrides?: { scale?: number; anchorOffset?: { x: number; y: number } }
+  ) => {
+    addItem(imageUrl, category, overrides);
     setShowUpload(false);
     setSelectedCategory(category);
     setShowInventory(true);

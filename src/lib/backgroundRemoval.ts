@@ -1,122 +1,107 @@
-import { pipeline, env } from "@huggingface/transformers";
-
-// Configure transformers.js
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-
-const MAX_INFERENCE_DIMENSION = 512;
 const AVATAR_ASSET_SIZE = 400;
+const EDGE_DETECT_MAX_DIM = 256;
 
-let segmenterInstance: any = null;
+export type CropRect = {
+  // normalized [0..1] coords relative to the decoded image
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
 
-async function getSegmenter() {
-  if (!segmenterInstance) {
-    console.log("[BG Removal] Loading segmentation model...");
-    segmenterInstance = await pipeline(
-      "image-segmentation",
-      "Xenova/segformer-b0-finetuned-ade-512-512",
-      { device: "webgpu" }
-    );
-    console.log("[BG Removal] Model loaded");
-  }
-  return segmenterInstance;
+export type DetectedBBox = { x: number; y: number; w: number; h: number };
+
+export type ClothingDebugViews = {
+  originalDataUrl: string;
+  bboxPreviewDataUrl: string;
+  spriteDataUrl: string;
+};
+
+function clamp01(v: number) {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
 }
 
-function fitWithinMaxDim(width: number, height: number, maxDim: number) {
-  if (width <= maxDim && height <= maxDim) return { width, height };
-  if (width >= height) {
-    return { width: maxDim, height: Math.max(1, Math.round((height * maxDim) / width)) };
-  }
-  return { width: Math.max(1, Math.round((width * maxDim) / height)), height: maxDim };
+function clamp(v: number, min: number, max: number) {
+  return v < min ? min : v > max ? max : v;
 }
 
 function canvasToDataURL(canvas: HTMLCanvasElement, type: string, quality?: number) {
   return canvas.toDataURL(type, quality);
 }
 
-function clamp01(x: number) {
-  return x < 0 ? 0 : x > 1 ? 1 : x;
+function fitWithinMaxDim(width: number, height: number, maxDim: number) {
+  if (width <= maxDim && height <= maxDim) return { width, height, scale: 1 };
+  if (width >= height) {
+    const newW = maxDim;
+    const newH = Math.max(1, Math.round((height * maxDim) / width));
+    return { width: newW, height: newH, scale: newW / width };
+  }
+  const newH = maxDim;
+  const newW = Math.max(1, Math.round((width * maxDim) / height));
+  return { width: newW, height: newH, scale: newH / height };
 }
 
-// Normalize mask to Float32 [0..1] length width*height
-function toFloatMask(maskData: any, expectedLength: number): Float32Array {
-  if (maskData instanceof Float32Array) {
-    if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
-    return maskData;
-  }
+function computeSobelEdgesBBox(imageData: ImageData): { bbox: DetectedBBox | null; edgeCount: number } {
+  const { width, height, data } = imageData;
+  const gray = new Float32Array(width * height);
 
-  if (maskData instanceof Uint8ClampedArray || maskData instanceof Uint8Array) {
-    if (maskData.length !== expectedLength) throw new Error("Mask size mismatch");
-    const out = new Float32Array(expectedLength);
-    for (let i = 0; i < expectedLength; i++) out[i] = maskData[i] / 255;
-    return out;
-  }
-
-  const maybe = maskData?.data ?? maskData?.value ?? maskData;
-  if (maybe instanceof Float32Array) return toFloatMask(maybe, expectedLength);
-  if (maybe instanceof Uint8ClampedArray || maybe instanceof Uint8Array) return toFloatMask(maybe, expectedLength);
-
-  throw new Error("Unsupported mask format");
-}
-
-function maskToGrayscaleCanvas(mask: Float32Array, width: number, height: number) {
-  const c = document.createElement("canvas");
-  c.width = width;
-  c.height = height;
-  const ctx = c.getContext("2d")!;
-  const img = ctx.createImageData(width, height);
-  for (let i = 0; i < mask.length; i++) {
-    const g = Math.round(clamp01(mask[i]) * 255);
+  for (let i = 0; i < width * height; i++) {
     const o = i * 4;
-    img.data[o] = g;
-    img.data[o + 1] = g;
-    img.data[o + 2] = g;
-    img.data[o + 3] = 255;
+    // luminance
+    gray[i] = 0.2126 * data[o] + 0.7152 * data[o + 1] + 0.0722 * data[o + 2];
   }
-  ctx.putImageData(img, 0, 0);
-  return c;
-}
 
-const BG_LABELS = new Set([
-  "wall",
-  "floor",
-  "ceiling",
-  "sky",
-  "ground",
-  "road",
-  "sidewalk",
-  "building",
-  "tree",
-  "grass",
-  "water",
-  "mountain",
-  "sand",
-  "snow",
-  "carpet",
-  "rug",
-  "curtain",
-  "blind",
-  "windowpane",
-  "door",
-  "background",
-]);
+  const mag = new Float32Array(width * height);
+  let sum = 0;
+  let sumSq = 0;
 
-type BBox = { minX: number; minY: number; maxX: number; maxY: number };
+  const at = (x: number, y: number) => gray[y * width + x];
 
-function computeBoundingBoxFromAlpha(rgbaCanvas: HTMLCanvasElement, alphaThreshold = 10): BBox {
-  const ctx = rgbaCanvas.getContext("2d")!;
-  const { width, height } = rgbaCanvas;
-  const img = ctx.getImageData(0, 0, width, height);
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const gx =
+        -1 * at(x - 1, y - 1) +
+        1 * at(x + 1, y - 1) +
+        -2 * at(x - 1, y) +
+        2 * at(x + 1, y) +
+        -1 * at(x - 1, y + 1) +
+        1 * at(x + 1, y + 1);
+
+      const gy =
+        -1 * at(x - 1, y - 1) +
+        -2 * at(x, y - 1) +
+        -1 * at(x + 1, y - 1) +
+        1 * at(x - 1, y + 1) +
+        2 * at(x, y + 1) +
+        1 * at(x + 1, y + 1);
+
+      const m = Math.sqrt(gx * gx + gy * gy);
+      const idx = y * width + x;
+      mag[idx] = m;
+      sum += m;
+      sumSq += m * m;
+    }
+  }
+
+  const n = (width - 2) * (height - 2);
+  const mean = sum / Math.max(1, n);
+  const variance = sumSq / Math.max(1, n) - mean * mean;
+  const std = Math.sqrt(Math.max(0, variance));
+
+  // Adaptive threshold: keep strong edges, but avoid over-pruning.
+  const threshold = mean + std * 1.25;
 
   let minX = width,
     minY = height,
     maxX = -1,
     maxY = -1;
+  let edgeCount = 0;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const a = img.data[(y * width + x) * 4 + 3];
-      if (a > alphaThreshold) {
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      if (mag[idx] >= threshold) {
+        edgeCount++;
         if (x < minX) minX = x;
         if (y < minY) minY = y;
         if (x > maxX) maxX = x;
@@ -125,391 +110,159 @@ function computeBoundingBoxFromAlpha(rgbaCanvas: HTMLCanvasElement, alphaThresho
     }
   }
 
-  if (maxX < 0 || maxY < 0) {
-    return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 };
+  if (edgeCount < 80 || maxX < 0 || maxY < 0) {
+    return { bbox: null, edgeCount };
   }
 
-  return { minX, minY, maxX, maxY };
-}
-
-// ------------- Garment-first mask utilities -------------
-
-function makeBinaryMask(mask: Float32Array, threshold: number): Uint8Array {
-  const out = new Uint8Array(mask.length);
-  for (let i = 0; i < mask.length; i++) out[i] = mask[i] >= threshold ? 1 : 0;
-  return out;
-}
-
-function dilateBinary(bin: Uint8Array, width: number, height: number, radius = 1): Uint8Array {
-  const out = new Uint8Array(bin.length);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      let v = 0;
-      for (let dy = -radius; dy <= radius && !v; dy++) {
-        const ny = y + dy;
-        if (ny < 0 || ny >= height) continue;
-        for (let dx = -radius; dx <= radius; dx++) {
-          const nx = x + dx;
-          if (nx < 0 || nx >= width) continue;
-          if (bin[ny * width + nx]) {
-            v = 1;
-            break;
-          }
-        }
-      }
-      out[y * width + x] = v;
-    }
-  }
-  return out;
-}
-
-// Keep only the largest connected component (garment as a single solid object)
-function largestConnectedComponent(bin: Uint8Array, width: number, height: number) {
-  const visited = new Uint8Array(bin.length);
-  const keep = new Uint8Array(bin.length);
-
-  let bestCount = 0;
-  let bestPixels: Uint8Array | null = null;
-
-  const queue = new Int32Array(bin.length);
-
-  for (let i = 0; i < bin.length; i++) {
-    if (!bin[i] || visited[i]) continue;
-
-    let qh = 0;
-    let qt = 0;
-    queue[qt++] = i;
-    visited[i] = 1;
-
-    const pixels = new Uint8Array(bin.length);
-    let count = 0;
-
-    while (qh < qt) {
-      const idx = queue[qh++];
-      pixels[idx] = 1;
-      count++;
-
-      const x = idx % width;
-      const y = (idx / width) | 0;
-
-      const n1 = x > 0 ? idx - 1 : -1;
-      const n2 = x < width - 1 ? idx + 1 : -1;
-      const n3 = y > 0 ? idx - width : -1;
-      const n4 = y < height - 1 ? idx + width : -1;
-
-      if (n1 >= 0 && bin[n1] && !visited[n1]) {
-        visited[n1] = 1;
-        queue[qt++] = n1;
-      }
-      if (n2 >= 0 && bin[n2] && !visited[n2]) {
-        visited[n2] = 1;
-        queue[qt++] = n2;
-      }
-      if (n3 >= 0 && bin[n3] && !visited[n3]) {
-        visited[n3] = 1;
-        queue[qt++] = n3;
-      }
-      if (n4 >= 0 && bin[n4] && !visited[n4]) {
-        visited[n4] = 1;
-        queue[qt++] = n4;
-      }
-    }
-
-    if (count > bestCount) {
-      bestCount = count;
-      bestPixels = pixels;
-    }
-  }
-
-  if (!bestPixels || bestCount === 0) {
-    return { keep, area: 0 };
-  }
-
-  keep.set(bestPixels);
-  return { keep, area: bestCount };
-}
-
-// Fill internal holes in a binary mask (guarantee no holes inside garment)
-function fillHoles(bin: Uint8Array, width: number, height: number): Uint8Array {
-  // Flood fill background from borders; anything not reached and not garment is a hole.
-  const visited = new Uint8Array(bin.length);
-  const queue = new Int32Array(bin.length);
-  let qt = 0;
-
-  const pushIfBg = (x: number, y: number) => {
-    const idx = y * width + x;
-    if (visited[idx]) return;
-    if (bin[idx]) return; // garment
-    visited[idx] = 1;
-    queue[qt++] = idx;
+  return {
+    bbox: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 },
+    edgeCount,
   };
-
-  // borders
-  for (let x = 0; x < width; x++) {
-    pushIfBg(x, 0);
-    pushIfBg(x, height - 1);
-  }
-  for (let y = 0; y < height; y++) {
-    pushIfBg(0, y);
-    pushIfBg(width - 1, y);
-  }
-
-  let qh = 0;
-  while (qh < qt) {
-    const idx = queue[qh++];
-    const x = idx % width;
-    const y = (idx / width) | 0;
-
-    const left = x > 0 ? idx - 1 : -1;
-    const right = x < width - 1 ? idx + 1 : -1;
-    const up = y > 0 ? idx - width : -1;
-    const down = y < height - 1 ? idx + width : -1;
-
-    if (left >= 0 && !visited[left] && !bin[left]) {
-      visited[left] = 1;
-      queue[qt++] = left;
-    }
-    if (right >= 0 && !visited[right] && !bin[right]) {
-      visited[right] = 1;
-      queue[qt++] = right;
-    }
-    if (up >= 0 && !visited[up] && !bin[up]) {
-      visited[up] = 1;
-      queue[qt++] = up;
-    }
-    if (down >= 0 && !visited[down] && !bin[down]) {
-      visited[down] = 1;
-      queue[qt++] = down;
-    }
-  }
-
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) {
-    // if it's garment already OR it's a hole (background not reachable from border)
-    out[i] = bin[i] || !visited[i] ? 1 : 0;
-  }
-  return out;
 }
 
-function binaryToSoftAlpha(bin: Uint8Array, softBase: Float32Array): Float32Array {
-  const out = new Float32Array(bin.length);
-  for (let i = 0; i < bin.length; i++) {
-    if (bin[i]) {
-      // prefer false positives: ensure a minimum alpha for kept pixels
-      out[i] = Math.max(0.65, softBase[i]);
-    } else {
-      out[i] = 0;
-    }
-  }
-  return out;
+function padBBox(b: DetectedBBox, width: number, height: number, padPx: number): DetectedBBox {
+  const x = Math.max(0, b.x - padPx);
+  const y = Math.max(0, b.y - padPx);
+  const x2 = Math.min(width - 1, b.x + b.w - 1 + padPx);
+  const y2 = Math.min(height - 1, b.y + b.h - 1 + padPx);
+  return { x, y, w: x2 - x + 1, h: y2 - y + 1 };
 }
 
-function composeRGBA(rgbCanvas: HTMLCanvasElement, alphaMask01: Float32Array) {
-  const ctx = rgbCanvas.getContext("2d")!;
-  const { width, height } = rgbCanvas;
-  const img = ctx.getImageData(0, 0, width, height);
-
-  // CRITICAL: keep RGB intact; set alpha only.
-  for (let i = 0; i < alphaMask01.length; i++) {
-    img.data[i * 4 + 3] = Math.round(clamp01(alphaMask01[i]) * 255);
-  }
-
-  ctx.putImageData(img, 0, 0);
-}
-
-function cropPadCenterTo400(srcCanvas: HTMLCanvasElement, bbox: BBox): HTMLCanvasElement {
-  const padding = 16;
-  const srcW = srcCanvas.width;
-  const srcH = srcCanvas.height;
-
-  const minX = Math.max(0, bbox.minX - padding);
-  const minY = Math.max(0, bbox.minY - padding);
-  const maxX = Math.min(srcW - 1, bbox.maxX + padding);
-  const maxY = Math.min(srcH - 1, bbox.maxY + padding);
-
-  const cropW = Math.max(1, maxX - minX + 1);
-  const cropH = Math.max(1, maxY - minY + 1);
+function cropAndNormalizeToSprite(
+  sourceCanvas: HTMLCanvasElement,
+  cropPx: { x: number; y: number; w: number; h: number }
+) {
+  const { x, y, w, h } = cropPx;
 
   const cropped = document.createElement("canvas");
-  cropped.width = cropW;
-  cropped.height = cropH;
+  cropped.width = Math.max(1, Math.floor(w));
+  cropped.height = Math.max(1, Math.floor(h));
   const cctx = cropped.getContext("2d")!;
-  cctx.drawImage(srcCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+  cctx.drawImage(sourceCanvas, x, y, w, h, 0, 0, cropped.width, cropped.height);
 
-  const out = document.createElement("canvas");
-  out.width = AVATAR_ASSET_SIZE;
-  out.height = AVATAR_ASSET_SIZE;
-  const octx = out.getContext("2d")!;
+  const sprite = document.createElement("canvas");
+  sprite.width = AVATAR_ASSET_SIZE;
+  sprite.height = AVATAR_ASSET_SIZE;
+  const sctx = sprite.getContext("2d")!;
 
+  // Transparent background by default; we preserve ALL pixels inside the crop.
   const maxSize = AVATAR_ASSET_SIZE * 0.92;
-  const scale = Math.min(maxSize / cropW, maxSize / cropH);
-  const drawW = cropW * scale;
-  const drawH = cropH * scale;
+  const scale = Math.min(maxSize / cropped.width, maxSize / cropped.height);
+  const drawW = cropped.width * scale;
+  const drawH = cropped.height * scale;
   const dx = (AVATAR_ASSET_SIZE - drawW) / 2;
   const dy = (AVATAR_ASSET_SIZE - drawH) / 2;
 
-  octx.drawImage(cropped, dx, dy, drawW, drawH);
-  return out;
+  sctx.drawImage(cropped, dx, dy, drawW, drawH);
+
+  return { cropped, sprite, spriteScale: scale, crop: { x, y, w, h } };
 }
 
-function makeSpriteNoMask(rgbCanvas: HTMLCanvasElement): HTMLCanvasElement {
-  // Fallback: keep original pixels (no masking), but still output a centered 400x400 sprite.
-  // Background will remain inside the crop, but outside the sprite is transparent.
-  const out = document.createElement("canvas");
-  out.width = AVATAR_ASSET_SIZE;
-  out.height = AVATAR_ASSET_SIZE;
-  const ctx = out.getContext("2d")!;
-
-  const maxSize = AVATAR_ASSET_SIZE * 0.92;
-  const scale = Math.min(maxSize / rgbCanvas.width, maxSize / rgbCanvas.height);
-  const drawW = rgbCanvas.width * scale;
-  const drawH = rgbCanvas.height * scale;
-  const dx = (AVATAR_ASSET_SIZE - drawW) / 2;
-  const dy = (AVATAR_ASSET_SIZE - drawH) / 2;
-  ctx.drawImage(rgbCanvas, dx, dy, drawW, drawH);
-  return out;
+function bboxFromManualCrop(bitmapW: number, bitmapH: number, rect: CropRect): DetectedBBox {
+  const x = clamp(Math.round(rect.x * bitmapW), 0, bitmapW - 1);
+  const y = clamp(Math.round(rect.y * bitmapH), 0, bitmapH - 1);
+  const w = clamp(Math.round(rect.w * bitmapW), 1, bitmapW - x);
+  const h = clamp(Math.round(rect.h * bitmapH), 1, bitmapH - y);
+  return { x, y, w, h };
 }
-
-export type ClothingDebugViews = {
-  originalDataUrl: string;
-  maskDataUrl: string;
-  composedDataUrl: string;
-};
 
 export async function processClothingFile(
   file: File,
-  onProgress?: (status: string) => void
-): Promise<{ assetBlob: Blob; assetDataUrl: string; debug: ClothingDebugViews }> {
-  onProgress?.("Decoding image...");
+  options?: {
+    manualCrop?: CropRect | null;
+    onProgress?: (status: string) => void;
+  }
+): Promise<{
+  assetBlob: Blob;
+  assetDataUrl: string;
+  detectedBBox: DetectedBBox;
+  debug: ClothingDebugViews;
+}>
+{
+  const onProgress = options?.onProgress;
 
+  onProgress?.("Decoding image...");
   const bitmap = await createImageBitmap(file);
 
-  const { width: infW, height: infH } = fitWithinMaxDim(
-    bitmap.width,
-    bitmap.height,
-    MAX_INFERENCE_DIMENSION
-  );
+  // Full-resolution working canvas (we are NOT masking, only cropping)
+  const full = document.createElement("canvas");
+  full.width = bitmap.width;
+  full.height = bitmap.height;
+  const fctx = full.getContext("2d")!;
+  fctx.drawImage(bitmap, 0, 0);
 
-  const rgbCanvas = document.createElement("canvas");
-  rgbCanvas.width = infW;
-  rgbCanvas.height = infH;
-  const rgbCtx = rgbCanvas.getContext("2d")!;
-  rgbCtx.drawImage(bitmap, 0, 0, infW, infH);
+  const originalDataUrl = canvasToDataURL(full, "image/png");
 
-  const originalDataUrl = canvasToDataURL(rgbCanvas, "image/png");
+  // Determine crop bbox
+  let bbox: DetectedBBox;
 
-  onProgress?.("Loading model...");
-  const segmenter = await getSegmenter();
-
-  onProgress?.("Removing background...");
-  const inputForModel = canvasToDataURL(rgbCanvas, "image/jpeg", 0.92);
-  const segments = await segmenter(inputForModel);
-
-  const expectedLen = infW * infH;
-
-  // Background union (soft)
-  const bgUnion = new Float32Array(expectedLen);
-  let bgCount = 0;
-
-  for (const seg of Array.isArray(segments) ? segments : []) {
-    const label = String(seg?.label ?? "").toLowerCase();
-    const raw = seg?.mask?.data;
-    if (!raw) continue;
-    const m = toFloatMask(raw, expectedLen);
-
-    if (BG_LABELS.has(label)) {
-      bgCount++;
-      for (let i = 0; i < expectedLen; i++) bgUnion[i] = Math.max(bgUnion[i], m[i]);
-    }
-  }
-
-  // Foreground soft mask: prefer keeping pixels.
-  const fgSoft = new Float32Array(expectedLen);
-  if (bgCount > 0) {
-    for (let i = 0; i < expectedLen; i++) fgSoft[i] = clamp01(1 - bgUnion[i]);
+  if (options?.manualCrop) {
+    bbox = bboxFromManualCrop(bitmap.width, bitmap.height, options.manualCrop);
   } else {
-    // Fallback union of all segments (then decide invert)
-    const union = new Float32Array(expectedLen);
-    for (const seg of Array.isArray(segments) ? segments : []) {
-      const raw = seg?.mask?.data;
-      if (!raw) continue;
-      const m = toFloatMask(raw, expectedLen);
-      for (let i = 0; i < expectedLen; i++) union[i] = Math.max(union[i], m[i]);
+    onProgress?.("Auto-cropping...");
+
+    // Edge detection on a downscaled canvas for speed
+    const { width: dw, height: dh, scale: downScale } = fitWithinMaxDim(
+      bitmap.width,
+      bitmap.height,
+      EDGE_DETECT_MAX_DIM
+    );
+
+    const det = document.createElement("canvas");
+    det.width = dw;
+    det.height = dh;
+    const dctx = det.getContext("2d")!;
+    dctx.drawImage(bitmap, 0, 0, dw, dh);
+
+    const img = dctx.getImageData(0, 0, dw, dh);
+    const { bbox: bb, edgeCount } = computeSobelEdgesBBox(img);
+
+    if (!bb) {
+      // Fallback: no auto-crop (use full image)
+      bbox = { x: 0, y: 0, w: bitmap.width, h: bitmap.height };
+    } else {
+      const padded = padBBox(bb, dw, dh, 8);
+      // Map back to full resolution
+      bbox = {
+        x: Math.round(padded.x / downScale),
+        y: Math.round(padded.y / downScale),
+        w: Math.round(padded.w / downScale),
+        h: Math.round(padded.h / downScale),
+      };
+
+      // Clamp to bounds
+      bbox.x = clamp(bbox.x, 0, bitmap.width - 1);
+      bbox.y = clamp(bbox.y, 0, bitmap.height - 1);
+      bbox.w = clamp(bbox.w, 1, bitmap.width - bbox.x);
+      bbox.h = clamp(bbox.h, 1, bitmap.height - bbox.y);
+
+      // If edge bbox is suspiciously small, fallback to full
+      const areaRatio = (bbox.w * bbox.h) / (bitmap.width * bitmap.height);
+      if (areaRatio < 0.06 || edgeCount < 120) {
+        bbox = { x: 0, y: 0, w: bitmap.width, h: bitmap.height };
+      }
     }
-
-    let mean = 0;
-    for (let i = 0; i < expectedLen; i++) mean += union[i];
-    mean /= expectedLen;
-    const inverted = mean > 0.6;
-    for (let i = 0; i < expectedLen; i++) fgSoft[i] = clamp01(inverted ? 1 - union[i] : union[i]);
   }
 
-  // ---- Garment-first: make a single solid silhouette ----
-  // Very low threshold: we prefer false positives.
-  const bin0 = makeBinaryMask(fgSoft, 0.12);
+  // Create sprite (no masking)
+  onProgress?.("Preparing sprite...");
+  const { sprite } = cropAndNormalizeToSprite(full, bbox);
 
-  // Keep ONE solid object: largest component.
-  const { keep, area } = largestConnectedComponent(bin0, infW, infH);
+  // Debug: bbox preview
+  const bboxPreview = document.createElement("canvas");
+  bboxPreview.width = full.width;
+  bboxPreview.height = full.height;
+  const bctx = bboxPreview.getContext("2d")!;
+  bctx.drawImage(full, 0, 0);
+  bctx.strokeStyle = "rgba(255,0,0,0.9)";
+  bctx.lineWidth = Math.max(2, Math.round(Math.min(full.width, full.height) * 0.002));
+  bctx.strokeRect(bbox.x, bbox.y, bbox.w, bbox.h);
 
-  // Confidence check: if foreground is too tiny, masking is unreliable.
-  const areaRatio = area / expectedLen;
-  const lowConfidence = areaRatio < 0.01;
-
-  if (lowConfidence) {
-    console.warn("[BG Removal] Low confidence mask; using NO-MASK fallback", { areaRatio });
-
-    const sprite = makeSpriteNoMask(rgbCanvas);
-    const maskCanvas = maskToGrayscaleCanvas(fgSoft, infW, infH);
-    const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
-
-    const composedDataUrl = canvasToDataURL(rgbCanvas, "image/png");
-
-    const assetBlob = await new Promise<Blob>((resolve, reject) => {
-      sprite.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
-        "image/png",
-        1.0
-      );
-    });
-
-    const assetDataUrl = await blobToBase64(assetBlob);
-
-    return {
-      assetBlob,
-      assetDataUrl,
-      debug: { originalDataUrl, maskDataUrl, composedDataUrl },
-    };
-  }
-
-  // Fill holes inside the garment.
-  const keepFilled = fillHoles(keep, infW, infH);
-
-  // Gentle dilation to avoid cutting sleeves/collars.
-  const keepPadded = dilateBinary(keepFilled, infW, infH, 1);
-
-  // Build final alpha mask (soft + minimum alpha for kept pixels)
-  const alpha = binaryToSoftAlpha(keepPadded, fgSoft);
-
-  // Compose RGBA
-  composeRGBA(rgbCanvas, alpha);
-  const composedDataUrl = canvasToDataURL(rgbCanvas, "image/png");
-
-  // Debug mask view is final alpha
-  const maskCanvas = maskToGrayscaleCanvas(alpha, infW, infH);
-  const maskDataUrl = canvasToDataURL(maskCanvas, "image/png");
-
-  // Crop based on alpha (forgiving)
-  const bbox = computeBoundingBoxFromAlpha(rgbCanvas, 8);
-
-  onProgress?.("Preparing wearable asset...");
-  const sprite = cropPadCenterTo400(rgbCanvas, bbox);
+  const bboxPreviewDataUrl = canvasToDataURL(bboxPreview, "image/png");
+  const spriteDataUrl = canvasToDataURL(sprite, "image/png");
 
   const assetBlob = await new Promise<Blob>((resolve, reject) => {
-    sprite.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
-      "image/png",
-      1.0
-    );
+    sprite.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG export failed"))), "image/png", 1.0);
   });
 
   const assetDataUrl = await blobToBase64(assetBlob);
@@ -517,7 +270,12 @@ export async function processClothingFile(
   return {
     assetBlob,
     assetDataUrl,
-    debug: { originalDataUrl, maskDataUrl, composedDataUrl },
+    detectedBBox: bbox,
+    debug: {
+      originalDataUrl,
+      bboxPreviewDataUrl,
+      spriteDataUrl,
+    },
   };
 }
 
