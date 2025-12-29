@@ -124,8 +124,8 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
       <div className="flex flex-col h-full max-w-md mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-serif">Add to Closet</h2>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing}>
+          <h2 className="text-2xl font-serif">Kıyafet Ekle</h2>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing} aria-label="Kapat">
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -165,8 +165,8 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
                 <div className="w-20 h-20 rounded-full bg-card flex items-center justify-center shadow-soft">
                   <Camera className="w-8 h-8" />
                 </div>
-                <p className="font-medium">Tap to add photo</p>
-                <p className="text-sm text-muted-foreground">Background will be removed automatically</p>
+                <p className="font-medium">Fotoğraf seç</p>
+                <p className="text-sm text-muted-foreground">Arka plan otomatik temizlenecek</p>
               </div>
             )}
             <input
@@ -180,9 +180,14 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
             />
           </div>
 
-          {/* Category Selection */}
+          {previewUrl && !isProcessing && (
+            <p className="text-sm text-muted-foreground">
+              Arka plan temizlendiyse aşağıdaki <span className="font-medium text-foreground">Kaydet</span> butonuna basarak gardolabına ekleyebilirsin.
+            </p>
+          )}
+
           <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">Category</p>
+            <p className="text-sm font-medium text-muted-foreground">Kategori</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -205,7 +210,7 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-6">
+        <div className="sticky bottom-0 flex gap-3 pt-6 pb-[env(safe-area-inset-bottom)] bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           {previewUrl && (
             <Button 
               variant="secondary" 
@@ -216,7 +221,7 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
               }}
               disabled={isProcessing}
             >
-              Retake
+              Yeniden Çek
             </Button>
           )}
           <Button 
@@ -228,12 +233,12 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
+                İşleniyor...
               </>
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                Add Item
+                Kaydet
               </>
             )}
           </Button>
