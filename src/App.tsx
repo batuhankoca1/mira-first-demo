@@ -8,6 +8,7 @@ import DressUp from "./pages/DressUp";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import { WardrobeProvider } from "@/hooks/useWardrobe";
 
 const queryClient = new QueryClient();
 
@@ -17,14 +18,16 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/closet" replace />} />
-          <Route path="/closet" element={<Closet />} />
-          <Route path="/dressup" element={<DressUp />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <WardrobeProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/closet" replace />} />
+            <Route path="/closet" element={<Closet />} />
+            <Route path="/dressup" element={<DressUp />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </WardrobeProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

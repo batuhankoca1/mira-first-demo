@@ -3,23 +3,28 @@ import { Button } from '@/components/ui/button';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 import { cn } from '@/lib/utils';
 import { Camera, X, Check, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { processClothingImage, loadImageFromFile, blobToBase64 } from '@/lib/backgroundRemoval';
+import { processClothingFile } from '@/lib/backgroundRemoval';
 
 interface PhotoUploadProps {
-  onUpload: (imageUrl: string, category: ClothingCategory) => void;
+  onSaved: (imageUrl: string, category: ClothingCategory) => void;
   onClose: () => void;
   defaultCategory?: ClothingCategory;
 }
 
-export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: PhotoUploadProps) {
+export function PhotoUpload({ onSaved, onClose, defaultCategory = 'tops' }: PhotoUploadProps) {
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>(defaultCategory);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
   const [isReadyToSave, setIsReadyToSave] = useState(false);
-  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
+  const [assetDataUrl, setAssetDataUrl] = useState<string | null>(null);
+  const [debug, setDebug] = useState<{
+    originalDataUrl: string;
+    maskDataUrl: string;
+    composedDataUrl: string;
+  } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,126 +33,85 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
 
     setIsProcessing(true);
     setIsReadyToSave(false);
-    setProcessedBlob(null);
+    setAssetDataUrl(null);
+    setDebug(null);
 
     try {
-      // Load image
-      const imageElement = await loadImageFromFile(file);
-      
-      // Show original first
-      setPreviewUrl(URL.createObjectURL(file));
-      
-      // Process with background removal and avatar preparation
-      const blob = await processClothingImage(imageElement, (status) => {
+      // Show original immediately (fast feedback)
+      const originalObjectUrl = URL.createObjectURL(file);
+      setPreviewUrl(originalObjectUrl);
+
+      const { assetDataUrl: ready, debug: dbg } = await processClothingFile(file, (status) => {
         setProcessingStatus(status);
       });
-      
-      // Convert to preview URL
-      const base64 = await blobToBase64(blob);
-      setPreviewUrl(base64);
-      setProcessedBlob(blob);
+
+      setDebug(dbg);
+      setAssetDataUrl(ready);
+      setPreviewUrl(ready);
       setIsReadyToSave(true);
-      toast.success('Kıyafet hazır!');
     } catch (err) {
       console.error('Processing error:', err);
-      toast.error('İşlem başarısız. Lütfen tekrar deneyin.');
+      toast.error('Background removal failed. Please try another photo.');
       setPreviewUrl(null);
+      setAssetDataUrl(null);
+      setDebug(null);
     } finally {
       setIsProcessing(false);
       setProcessingStatus('');
     }
   };
 
-  const handleSave = async () => {
-    if (!processedBlob || !previewUrl) return;
-    
-    setIsProcessing(true);
-    setProcessingStatus('Kaydediliyor...');
-
-    try {
-      // Upload to Supabase Storage
-      const fileName = `${Date.now()}-${selectedCategory}.png`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('clothing-items')
-        .upload(fileName, processedBlob, {
-          contentType: 'image/png',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        // Fallback to base64
-        onUpload(previewUrl, selectedCategory);
-        toast.success('Item gardolaba eklendi!');
-        onClose();
-        return;
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('clothing-items')
-        .getPublicUrl(uploadData.path);
-
-      onUpload(urlData.publicUrl, selectedCategory);
-      toast.success('Item gardolaba eklendi!');
-      onClose();
-    } catch (err) {
-      console.error('Save error:', err);
-      // Fallback to base64
-      onUpload(previewUrl, selectedCategory);
-      toast.success('Item gardolaba eklendi!');
-      onClose();
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleSave = () => {
+    if (!assetDataUrl) return;
+    onSaved(assetDataUrl, selectedCategory);
+    toast.success(`Saved to ${CATEGORIES.find(c => c.value === selectedCategory)?.label ?? selectedCategory}`);
   };
 
   const handleRetake = () => {
     setPreviewUrl(null);
-    setProcessedBlob(null);
+    setAssetDataUrl(null);
     setIsReadyToSave(false);
     setProcessingStatus('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setDebug(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm animate-fade-in">
       <div className="flex flex-col h-full max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-serif font-semibold">Kıyafet Ekle</h2>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing} aria-label="Kapat">
+          <h2 className="text-xl font-serif font-semibold">Add Item</h2>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={isProcessing} aria-label="Close">
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Content - Scrollable */}
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {/* Photo Area */}
-          <div 
+          {/* Main preview */}
+          <div
             className={cn(
-              "relative aspect-square rounded-2xl overflow-hidden transition-all duration-300 mb-4",
-              previewUrl 
-                ? "bg-[#f0f0f0]"
-                : "bg-secondary border-2 border-dashed border-border cursor-pointer hover:border-accent"
+              'relative aspect-square rounded-2xl overflow-hidden transition-all duration-300 mb-4',
+              previewUrl
+                ? 'bg-secondary/40'
+                : 'bg-secondary border-2 border-dashed border-border cursor-pointer hover:border-accent'
             )}
             onClick={() => !previewUrl && !isProcessing && fileInputRef.current?.click()}
-            style={previewUrl ? {
-              backgroundImage: 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
-              backgroundSize: '16px 16px',
-              backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px'
-            } : undefined}
+            style={
+              previewUrl
+                ? {
+                    backgroundImage:
+                      'linear-gradient(45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--border)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--border)) 75%)',
+                    backgroundSize: '16px 16px',
+                    backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                  }
+                : undefined
+            }
           >
             {previewUrl ? (
               <>
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-full h-full object-contain animate-scale-in"
-                />
+                <img src={previewUrl} alt="Wearable preview" className="w-full h-full object-contain" />
                 {isProcessing && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
                     <Loader2 className="w-10 h-10 animate-spin text-accent" />
@@ -160,9 +124,9 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
                 <div className="w-20 h-20 rounded-full bg-card flex items-center justify-center shadow-soft">
                   <Camera className="w-8 h-8" />
                 </div>
-                <p className="font-medium">Fotoğraf Seç</p>
+                <p className="font-medium">Choose Photo</p>
                 <p className="text-sm text-center px-4 text-muted-foreground">
-                  Arka plan otomatik temizlenir ve avatar için hazırlanır
+                  We'll remove the background and turn it into a wearable 400×400 sprite
                 </p>
               </div>
             )}
@@ -170,16 +134,39 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleFileChange}
               className="hidden"
               disabled={isProcessing}
             />
           </div>
 
+          {/* Temporary debug view */}
+          {debug && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Original</p>
+                <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
+                  <img src={debug.originalDataUrl} alt="Original" className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Mask</p>
+                <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
+                  <img src={debug.maskDataUrl} alt="Mask" className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Composed</p>
+                <div className="aspect-square rounded-lg overflow-hidden bg-secondary/30">
+                  <img src={debug.composedDataUrl} alt="Composed" className="w-full h-full object-contain" />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Category Selection */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">Kategori</p>
+            <p className="text-sm font-medium text-muted-foreground">Category</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -187,10 +174,10 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
                   onClick={() => setSelectedCategory(cat.value)}
                   disabled={isProcessing}
                   className={cn(
-                    "px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+                    'px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5',
                     selectedCategory === cat.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                   )}
                 >
                   <span>{cat.icon}</span>
@@ -199,46 +186,31 @@ export function PhotoUpload({ onUpload, onClose, defaultCategory = 'tops' }: Pho
               ))}
             </div>
           </div>
-
-          {/* Ready indicator */}
-          {isReadyToSave && (
-            <div className="mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm text-center">
-              ✓ Kıyafet avatar için hazır! Aşağıdan kaydet.
-            </div>
-          )}
         </div>
 
-        {/* Fixed Bottom Actions - Always visible */}
-        <div className="p-4 border-t border-border bg-background">
+        {/* Fixed bottom actions (always visible, above tab bar) */}
+        <div className="p-4 border-t border-border bg-background pb-safe">
           <div className="flex gap-3">
             {previewUrl && (
-              <Button 
-                variant="secondary" 
-                className="flex-1"
-                onClick={handleRetake}
-                disabled={isProcessing}
-              >
-                Yeniden Seç
+              <Button variant="secondary" className="flex-1" onClick={handleRetake} disabled={isProcessing}>
+                Choose Again
               </Button>
             )}
-            <Button 
+            <Button
               variant="default"
-              className={cn(
-                "flex-1 gap-2",
-                isReadyToSave && "bg-green-600 hover:bg-green-700"
-              )}
+              className="flex-1 gap-2"
               disabled={!isReadyToSave || isProcessing}
               onClick={handleSave}
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {processingStatus || 'İşleniyor...'}
+                  {processingStatus || 'Processing...'}
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Kaydet
+                  Save Item
                 </>
               )}
             </Button>

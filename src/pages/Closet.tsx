@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { PhotoUpload } from '@/components/PhotoUpload';
 import { CategoryInventory } from '@/components/CategoryInventory';
-import { useCloset } from '@/hooks/useCloset';
+import { useWardrobe } from '@/hooks/useWardrobe';
 import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
@@ -22,7 +22,7 @@ const SHELF_ZONES: {
 ];
 
 const Closet = () => {
-  const { items, addItem, removeItem } = useCloset();
+  const { wardrobe, addItem, removeItem } = useWardrobe();
   const [showUpload, setShowUpload] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory>('tops');
@@ -31,10 +31,9 @@ const Closet = () => {
   const handleShelfTap = (category: ClothingCategory) => {
     setSelectedCategory(category);
     setTappedZone(category);
-    
+
     setTimeout(() => {
       setTappedZone(null);
-      // Open inventory view instead of camera
       setShowInventory(true);
     }, 100);
   };
@@ -44,8 +43,11 @@ const Closet = () => {
     setShowUpload(true);
   };
 
-  const handleUploadComplete = (imageUrl: string, category: ClothingCategory) => {
+  const handleSaved = (imageUrl: string, category: ClothingCategory) => {
     addItem(imageUrl, category);
+    setShowUpload(false);
+    setSelectedCategory(category);
+    setShowInventory(true);
   };
 
   const handleDeleteItem = (id: string) => {
@@ -53,7 +55,7 @@ const Closet = () => {
   };
 
   const getItemCount = (category: ClothingCategory) => {
-    return items.filter(item => item.category === category).length;
+    return wardrobe[category]?.length ?? 0;
   };
 
   return (
@@ -121,7 +123,7 @@ const Closet = () => {
       {showInventory && (
         <CategoryInventory
           category={selectedCategory}
-          items={items}
+          wardrobe={wardrobe}
           onClose={() => setShowInventory(false)}
           onAddNew={handleAddNew}
           onDeleteItem={handleDeleteItem}
@@ -131,7 +133,7 @@ const Closet = () => {
       {/* Upload Modal */}
       {showUpload && (
         <PhotoUpload
-          onUpload={handleUploadComplete}
+          onSaved={handleSaved}
           onClose={() => setShowUpload(false)}
           defaultCategory={selectedCategory}
         />
