@@ -3,35 +3,44 @@ import { BottomNav } from '@/components/BottomNav';
 import { PhotoUpload } from '@/components/PhotoUpload';
 import { useCloset } from '@/hooks/useCloset';
 import { ClothingCategory } from '@/types/clothing';
-import { Menu, User } from 'lucide-react';
-import wardrobeBg from '@/assets/wardrobe-scene.png';
-import avatarImg from '@/assets/avatar-transparent.png';
+import closetScene from '@/assets/closet-scene-full.png';
 
-// Shelf zones mapped to the wardrobe image - these are tap targets
+// Shelf zones mapped precisely to the illustrated wardrobe
+// These invisible tap zones overlay the physical shelf areas
 const SHELF_ZONES: {
   category: ClothingCategory;
   label: string;
-  zone: string; // positioning classes for the invisible tap zone
+  zone: string;
 }[] = [
   { 
     category: 'tops', 
     label: 'Tops',
-    zone: 'top-[2%] left-[10%] right-[18%] h-[12%]' // Top shelf with folded clothes
+    zone: 'top-[12%] left-[8%] w-[25%] h-[18%]'
   },
   { 
-    category: 'outerwear', 
-    label: 'Outerwear',
-    zone: 'top-[14%] left-[10%] right-[18%] h-[22%]' // Hanging rail with jackets
+    category: 'bottoms', 
+    label: 'Bottoms',
+    zone: 'top-[12%] left-[33%] w-[22%] h-[18%]'
+  },
+  { 
+    category: 'dresses', 
+    label: 'Dresses & Skirts',
+    zone: 'top-[12%] right-[5%] w-[28%] h-[35%]'
   },
   { 
     category: 'shoes', 
     label: 'Shoes',
-    zone: 'top-[36%] left-[0%] w-[18%] h-[28%]' // Left shoe shelves
+    zone: 'top-[55%] left-[3%] w-[30%] h-[25%]'
   },
   { 
     category: 'accessories', 
-    label: 'Bags & Accessories',
-    zone: 'top-[14%] right-[0%] w-[16%] h-[52%]' // Right side shelves with bags
+    label: 'Bags',
+    zone: 'top-[55%] right-[3%] w-[25%] h-[18%]'
+  },
+  { 
+    category: 'outerwear', 
+    label: 'Accessory',
+    zone: 'top-[73%] right-[3%] w-[25%] h-[12%]'
   },
 ];
 
@@ -39,17 +48,17 @@ const Closet = () => {
   const { items, addItem } = useCloset();
   const [showUpload, setShowUpload] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<ClothingCategory>('tops');
-  const [activeZone, setActiveZone] = useState<ClothingCategory | null>(null);
+  const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
 
   const handleShelfTap = (category: ClothingCategory) => {
     setUploadCategory(category);
-    setActiveZone(category);
+    setTappedZone(category);
     
-    // Brief highlight then open upload
+    // Brief visual feedback then open
     setTimeout(() => {
-      setActiveZone(null);
+      setTappedZone(null);
       setShowUpload(true);
-    }, 150);
+    }, 120);
   };
 
   const getItemCount = (category: ClothingCategory) => {
@@ -57,73 +66,42 @@ const Closet = () => {
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      {/* Header - floating over scene */}
-      <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
-        <div className="container max-w-md mx-auto px-4 pt-3">
-          <div className="flex items-center justify-between pointer-events-auto">
-            <button className="w-10 h-10 rounded-xl flex items-center justify-center text-amber-900/70 hover:text-amber-900 hover:bg-amber-100/50 transition-colors">
-              <Menu className="w-5 h-5" />
-            </button>
-            
-            <div className="text-center">
-              <h1 className="text-lg font-serif font-bold text-amber-900 tracking-wide drop-shadow-sm">MIRA</h1>
-              <p className="text-xs font-medium text-amber-800/80">My Closet</p>
-            </div>
-            
-            <button className="w-10 h-10 rounded-full bg-amber-100/60 backdrop-blur-sm flex items-center justify-center text-amber-800 hover:bg-amber-100 transition-colors">
-              <User className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Wardrobe Scene */}
-      <div className="relative w-full h-full max-w-md mx-auto">
-        {/* Background - the wardrobe */}
+    <div className="fixed inset-0 bg-[#f5ebe0]">
+      {/* Full Scene Container */}
+      <div className="relative w-full h-full max-w-md mx-auto overflow-hidden">
+        {/* The Complete Illustrated Closet Scene */}
         <img 
-          src={wardrobeBg}
-          alt="Wardrobe"
+          src={closetScene}
+          alt="My Closet"
           className="absolute inset-0 w-full h-full object-cover object-top"
+          draggable={false}
         />
 
-        {/* Invisible shelf tap zones */}
-        {SHELF_ZONES.map(({ category, label, zone }) => {
+        {/* Invisible Shelf Tap Zones */}
+        {SHELF_ZONES.map(({ category, zone }) => {
           const count = getItemCount(category);
-          const isActive = activeZone === category;
+          const isTapped = tappedZone === category;
           
           return (
             <button
               key={category}
               onClick={() => handleShelfTap(category)}
-              className={`absolute ${zone} transition-all duration-150 ${
-                isActive 
-                  ? 'bg-white/30 backdrop-blur-[1px]' 
-                  : 'bg-transparent hover:bg-white/10'
+              className={`absolute ${zone} transition-all duration-100 rounded-lg ${
+                isTapped 
+                  ? 'bg-white/25 ring-2 ring-white/40' 
+                  : 'bg-transparent active:bg-white/15'
               }`}
-              aria-label={`${label} - ${count} items`}
+              aria-label={`Open ${category}`}
             >
-              {/* Small item count badge - subtle, only shows if items exist */}
+              {/* Item count badge - only shows if user has added items */}
               {count > 0 && (
-                <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-full bg-amber-900/80 text-white text-[10px] font-medium shadow-sm">
+                <span className="absolute -bottom-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-800 text-white text-[11px] font-semibold flex items-center justify-center shadow-md">
                   {count}
                 </span>
               )}
             </button>
           );
         })}
-
-        {/* Avatar - positioned in the center empty space of wardrobe */}
-        <div className="absolute bottom-[12%] left-1/2 -translate-x-1/2 w-[50%] max-w-[200px] pointer-events-none">
-          <img 
-            src={avatarImg} 
-            alt="Your avatar" 
-            className="w-full h-auto"
-            style={{
-              filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
-            }}
-          />
-        </div>
       </div>
 
       {/* Upload Modal */}
