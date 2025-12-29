@@ -57,18 +57,34 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
   };
 
   return (
-    <div className={`relative flex justify-center items-end h-full w-full ${className}`}>
+    <div
+      className={`w-full ${className}`}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '75vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        backgroundColor: 'transparent',
+        overflow: 'hidden',
+      }}
+    >
       {/* Inner wrapper maintains aspect ratio */}
-      <div 
-        className="relative h-[90%]" 
-        style={{ aspectRatio: '1 / 2' }}
-      >
+      <div className="relative" style={{ height: '100%', aspectRatio: '1 / 2' }}>
         {/* Base Avatar - ALWAYS visible, z-index 0 */}
         <img
           src={baseAvatar}
           alt="Base Avatar"
-          className="relative w-full h-full object-contain"
-          style={{ zIndex: 0 }}
+          className="object-contain"
+          style={{
+            position: 'relative',
+            zIndex: 0,
+            display: 'block',
+            opacity: 1,
+            maxHeight: '100%',
+            width: 'auto',
+          }}
           draggable={false}
         />
 
