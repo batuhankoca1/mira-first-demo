@@ -8,7 +8,8 @@ interface AvatarContainerProps {
 }
 
 // Fine-tuned positioning for transparent clothing on the anime avatar
-const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
+// Only wearable categories are defined here
+const LAYER_STYLES: Partial<Record<ClothingCategory, React.CSSProperties>> = {
   // Tops: positioned at chest/torso area
   tops: {
     position: 'absolute',
@@ -27,7 +28,7 @@ const LAYER_STYLES: Record<ClothingCategory, React.CSSProperties> = {
     width: '50%',
     zIndex: 20,
   },
-  // Bag: hangs on right side (empty for now)
+  // Bag: hangs on right side
   bags: {
     position: 'absolute',
     top: '38%',
@@ -42,7 +43,8 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
   // Render a clothing layer with hardcoded positioning
   const renderClothingLayer = (category: ClothingCategory) => {
     const item = selectedItems[category];
-    if (!item) return null;
+    const style = LAYER_STYLES[category];
+    if (!item || !style) return null;
 
     return (
       <img
@@ -51,7 +53,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         alt={category}
         className="pointer-events-none"
         style={{
-          ...LAYER_STYLES[category],
+          ...style,
           height: 'auto',
           objectFit: 'contain',
           opacity: 1,
