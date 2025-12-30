@@ -17,8 +17,8 @@ interface PhotoUploadProps {
   defaultCategory?: ClothingCategory;
 }
 
-// Layer positions matching Avatar2D (percentage-based) - only 3 categories
-const LAYER_POSITIONS: Record<ClothingCategory, { top: string; height: string; width: string; left?: string }> = {
+// Layer positions matching Avatar2D (percentage-based) - only wearable categories
+const LAYER_POSITIONS: Partial<Record<ClothingCategory, { top: string; height: string; width: string; left?: string }>> = {
   tops: { top: "22%", height: "28%", width: "50%" },
   bottoms: { top: "48%", height: "26%", width: "45%" },
   bags: { top: "40%", height: "20%", width: "25%" },

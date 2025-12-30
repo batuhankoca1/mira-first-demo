@@ -2,28 +2,28 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { ClothingCategory, ClothingItem, AnchorType } from "@/types/clothing";
 import { CATEGORY_ANCHORS } from "@/types/clothing";
 
-export type Wardrobe = Record<ClothingCategory, ClothingItem[]>;
+export type Wardrobe = Partial<Record<ClothingCategory, ClothingItem[]>>;
 
 const STORAGE_KEY = "mira-wardrobe-v2";
 
-// Only 3 categories now
-const CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags"];
+// Wearable categories for the avatar
+const WEARABLE_CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags"];
+
+// All possible categories
+const ALL_CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags", "shoes", "jackets", "dresses", "accessories"];
 
 function createEmptyWardrobe(): Wardrobe {
-  return {
-    tops: [],
-    bottoms: [],
-    bags: [],
-  };
+  return {};
 }
 
 function normalizeWardrobe(input: any): Wardrobe {
   const base = createEmptyWardrobe();
   if (!input || typeof input !== "object") return base;
 
-  for (const cat of CATEGORIES) {
+  for (const cat of ALL_CATEGORIES) {
     const arr = Array.isArray(input[cat]) ? input[cat] : [];
     const defaults = CATEGORY_ANCHORS[cat];
+    if (!defaults) continue; // Skip categories without anchor config
     
     base[cat] = arr
       .filter(Boolean)
@@ -73,7 +73,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         const normalized = normalizeWardrobe(parsed);
-        console.log("[Wardrobe] Loaded items:", CATEGORIES.map(c => `${c}: ${normalized[c].length}`).join(", "));
+        console.log("[Wardrobe] Loaded items:", WEARABLE_CATEGORIES.map(c => `${c}: ${(normalized[c] ?? []).length}`).join(", "));
         setWardrobe(normalized);
       }
     } catch (e) {
@@ -85,8 +85,8 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   const persist = useCallback((next: Wardrobe) => {
     try {
       const serializable: Record<string, any[]> = {};
-      for (const cat of CATEGORIES) {
-        serializable[cat] = next[cat].map(item => ({
+      for (const cat of ALL_CATEGORIES) {
+        serializable[cat] = (next[cat] ?? []).map(item => ({
           ...item,
           createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
         }));
@@ -137,7 +137,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       console.log("[Wardrobe] Removing item:", id);
       setWardrobe((prev) => {
         const next: Wardrobe = createEmptyWardrobe();
-        for (const cat of CATEGORIES) {
+        for (const cat of ALL_CATEGORIES) {
           next[cat] = (prev[cat] ?? []).filter((i) => i.id !== id);
         }
         persist(next);
@@ -153,7 +153,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   );
 
   const items = useMemo(
-    () => CATEGORIES.flatMap((cat) => wardrobe[cat] ?? []),
+    () => ALL_CATEGORIES.flatMap((cat) => wardrobe[cat] ?? []),
     [wardrobe]
   );
 

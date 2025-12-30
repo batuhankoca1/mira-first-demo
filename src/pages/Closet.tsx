@@ -6,21 +6,23 @@ import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
 
-// Active shelf zones - positioned over folded clothes in illustration
-const SHELF_ZONES: {
+// Clickable zones positioned over the text labels in the illustration
+// These are positioned relative to the image container
+const CATEGORY_ZONES: {
   category: ClothingCategory;
   zone: string;
-  label: string;
 }[] = [
-  { category: 'tops', zone: 'top-[8%] left-[5%] w-[32%] h-[12%]', label: 'Tops' },
-  { category: 'bottoms', zone: 'top-[8%] right-[5%] w-[32%] h-[12%]', label: 'Bottoms' },
-  { category: 'bags', zone: 'top-[58%] right-[5%] w-[28%] h-[12%]', label: 'Bags' },
-];
-
-// Visual-only labels (not clickable, just for illustration context)
-const VISUAL_LABELS = [
-  { label: 'Shoes', position: 'bottom-[22%] left-[8%]' },
-  { label: 'Accessories', position: 'top-[42%] right-[8%]' },
+  // Top shelf labels
+  { category: 'tops', zone: 'top-[12%] left-[18%] w-[14%] h-[5%]' },
+  { category: 'bottoms', zone: 'top-[12%] left-[54%] w-[18%] h-[5%]' },
+  // Second row (hanging area labels)
+  { category: 'jackets', zone: 'top-[26%] left-[18%] w-[16%] h-[5%]' },
+  { category: 'dresses', zone: 'top-[26%] left-[54%] w-[16%] h-[5%]' },
+  // Lower sections
+  { category: 'shoes', zone: 'top-[64%] left-[18%] w-[14%] h-[5%]' },
+  { category: 'bags', zone: 'top-[64%] left-[56%] w-[12%] h-[5%]' },
+  // Accessories section (right side)
+  { category: 'accessories', zone: 'top-[72%] left-[54%] w-[20%] h-[5%]' },
 ];
 
 const Closet = () => {
@@ -70,43 +72,25 @@ const Closet = () => {
           draggable={false}
         />
 
-        {/* Interactive shelf zones with inline labels */}
+        {/* Invisible clickable zones over the text labels in illustration */}
         <div className="absolute inset-0 pt-14 pb-20">
           <div className="relative w-full h-full">
-            {/* Active category buttons */}
-            {SHELF_ZONES.map(({ category, zone, label }) => {
-              const count = getItemCount(category);
+            {CATEGORY_ZONES.map(({ category, zone }) => {
               const isTapped = tappedZone === category;
               
               return (
                 <button
                   key={category}
                   onClick={() => handleShelfTap(category)}
-                  className={`absolute ${zone} transition-all duration-75 rounded-xl flex items-center justify-center ${
+                  className={`absolute ${zone} transition-all duration-75 rounded-md ${
                     isTapped 
-                      ? 'bg-amber-200/40 ring-2 ring-amber-500/60' 
-                      : 'bg-amber-900/5 hover:bg-amber-100/30 active:bg-amber-200/40'
+                      ? 'bg-amber-200/50' 
+                      : 'hover:bg-amber-100/30 active:bg-amber-200/40'
                   }`}
                   aria-label={`Open ${category}`}
-                >
-                  <span className="px-3 py-1.5 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm text-amber-900 font-medium text-sm">
-                    {label} <span className="text-amber-600/80 font-normal">({count})</span>
-                  </span>
-                </button>
+                />
               );
             })}
-
-            {/* Visual-only labels for out-of-scope categories */}
-            {VISUAL_LABELS.map(({ label, position }) => (
-              <div
-                key={label}
-                className={`absolute ${position} pointer-events-none`}
-              >
-                <span className="px-2.5 py-1 rounded-md bg-white/60 backdrop-blur-sm text-amber-800/60 font-medium text-xs">
-                  {label}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
