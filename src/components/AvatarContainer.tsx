@@ -27,7 +27,7 @@ const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
   },
   bottoms: {
     top: '38%',
-    left: '9%',
+    left: '8%',
     width: '58%',
     zIndex: 10,
     scaleX: 1.5,
