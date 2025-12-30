@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
-import { WARDROBE_ITEMS } from '@/data/wardrobeData';
-import { useDemoWardrobeItems } from '@/hooks/useDemoWardrobeItems';
+import { getItemsByCategory } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 
 const CategoryDetail = () => {
@@ -20,7 +18,6 @@ const CategoryDetail = () => {
     );
   }
 
-  const { getItemsByCategory } = useDemoWardrobeItems(WARDROBE_ITEMS);
   const items = getItemsByCategory(category as ClothingCategory);
 
   return (
@@ -61,7 +58,7 @@ const CategoryDetail = () => {
                 className="aspect-square rounded-2xl bg-white/80 border border-amber-200/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                 style={{
                   backgroundImage:
-                    'linear-gradient(45deg, #f5f5f5 25%, transparent 25%), linear-gradient(-45deg, #f5f5f5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f5f5f5 75%), linear-gradient(-45deg, transparent 75%, #f5f5f5 75%)',
+                    'linear-gradient(45deg, #f0ebe3 25%, transparent 25%), linear-gradient(-45deg, #f0ebe3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0ebe3 75%), linear-gradient(-45deg, transparent 75%, #f0ebe3 75%)',
                   backgroundSize: '16px 16px',
                   backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
                 }}
