@@ -15,11 +15,8 @@ export const WARDROBE_ITEMS: WardrobeItem[] = [
   { id: 'top-3', category: 'tops', src: '/demo-items/tops/top3-cut.png' },
   { id: 'top-4', category: 'tops', src: '/demo-items/tops/top4-cut.png' },
 
-  // ========== BOTTOMS (4) ==========
-  { id: 'bottom-1', category: 'bottoms', src: '/demo-items/bottoms/bottom1-cut.png' },
-  { id: 'bottom-2', category: 'bottoms', src: '/demo-items/bottoms/bottom2-cut.png' },
-  { id: 'bottom-3', category: 'bottoms', src: '/demo-items/bottoms/bottom3-cut.png' },
-  { id: 'bottom-4', category: 'bottoms', src: '/demo-items/bottoms/bottom4-cut.png' },
+  // ========== BOTTOMS (1) ==========
+  { id: 'bottom-1', category: 'bottoms', src: '/demo-items/bottoms/cargo-pants.png' },
 
   // ========== BAGS (4) ==========
   { id: 'bag-1', category: 'bags', src: '/demo-items/bags/bag1-cut.png' },
