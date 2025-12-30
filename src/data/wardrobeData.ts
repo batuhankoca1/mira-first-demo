@@ -7,6 +7,7 @@ export interface WardrobeItem {
 }
 
 // Demo wardrobe with transparent PNG images
+// Using standardized 500x500 canvas approach
 export const WARDROBE_ITEMS: WardrobeItem[] = [
   // ========== TOPS (1) ==========
   { id: 'top-1', category: 'tops', src: '/demo-items/tops/black-tshirt.png' },

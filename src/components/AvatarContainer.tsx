@@ -7,62 +7,40 @@ interface AvatarContainerProps {
   className?: string;
 }
 
-// Fine-tuned positioning for transparent clothing on the anime avatar
-// Only wearable categories are defined here
-const LAYER_STYLES: Partial<Record<ClothingCategory, React.CSSProperties>> = {
-  // Tops: positioned at chest/torso area
+// Positioning config for each wearable category
+// All values are percentages relative to the avatar container
+interface LayerConfig {
+  top: string;
+  left: string;
+  width: string;
+  zIndex: number;
+}
+
+const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
   tops: {
-    position: 'absolute',
     top: '18%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '48%',
-    zIndex: 30,
-  },
-  // Bottoms: positioned at waist → legs
-  bottoms: {
-    position: 'absolute',
-    top: '38%',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    left: '25%',
     width: '50%',
     zIndex: 20,
   },
-  // Bag: hangs on right side
-  bags: {
-    position: 'absolute',
+  bottoms: {
     top: '38%',
-    left: '70%',
-    transform: 'translateX(-50%)',
-    width: '20%',
-    zIndex: 40,
+    left: '24%',
+    width: '52%',
+    zIndex: 10,
+  },
+  bags: {
+    top: '35%',
+    left: '65%',
+    width: '25%',
+    zIndex: 30,
   },
 };
 
+// Wearable categories that can be rendered on avatar
+const WEARABLE_CATEGORIES: ClothingCategory[] = ['bottoms', 'tops', 'bags'];
+
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
-  // Render a clothing layer with hardcoded positioning
-  const renderClothingLayer = (category: ClothingCategory) => {
-    const item = selectedItems[category];
-    const style = LAYER_STYLES[category];
-    if (!item || !style) return null;
-
-    return (
-      <img
-        key={item.id}
-        src={item.src}
-        alt={category}
-        className="pointer-events-none"
-        style={{
-          ...style,
-          height: 'auto',
-          objectFit: 'contain',
-          opacity: 1,
-        }}
-        draggable={false}
-      />
-    );
-  };
-
   return (
     <div
       className={`w-full ${className}`}
@@ -77,28 +55,55 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         overflow: 'hidden',
       }}
     >
-      {/* Inner wrapper maintains aspect ratio */}
-      <div className="relative" style={{ height: '100%', aspectRatio: '1 / 2' }}>
-        {/* Base Avatar - ALWAYS visible, z-index 0 */}
+      {/* Inner wrapper maintains aspect ratio matching the avatar */}
+      <div 
+        className="relative" 
+        style={{ 
+          height: '100%', 
+          aspectRatio: '1 / 2',
+        }}
+      >
+        {/* Base Avatar - z-index 0 */}
         <img
           src={baseAvatar}
           alt="Base Avatar"
-          className="object-contain"
           style={{
-            position: 'relative',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
             zIndex: 0,
-            display: 'block',
-            opacity: 1,
-            maxHeight: '100%',
-            width: 'auto',
           }}
           draggable={false}
         />
 
-        {/* Clothing layers - hardcoded positions, rendered in z-order */}
-        {renderClothingLayer('bottoms')}
-        {renderClothingLayer('tops')}
-        {renderClothingLayer('bags')}
+        {/* Clothing layers */}
+        {WEARABLE_CATEGORIES.map((category) => {
+          const item = selectedItems[category];
+          const config = LAYER_CONFIG[category];
+          if (!item || !config) return null;
+
+          return (
+            <img
+              key={item.id}
+              src={item.src}
+              alt={category}
+              className="pointer-events-none"
+              style={{
+                position: 'absolute',
+                top: config.top,
+                left: config.left,
+                width: config.width,
+                height: 'auto',
+                objectFit: 'contain',
+                zIndex: config.zIndex,
+              }}
+              draggable={false}
+            />
+          );
+        })}
       </div>
     </div>
   );
