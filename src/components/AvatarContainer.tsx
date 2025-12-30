@@ -18,15 +18,15 @@ interface LayerConfig {
 
 const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
   tops: {
-    top: '18%',
-    left: '25%',
-    width: '50%',
+    top: '20%',
+    left: '12%',
+    width: '75%', // 1.5x larger
     zIndex: 20,
   },
   bottoms: {
-    top: '38%',
-    left: '24%',
-    width: '52%',
+    top: '40%',
+    left: '-7%',
+    width: '115%', // 2.2x larger
     zIndex: 10,
   },
   bags: {
