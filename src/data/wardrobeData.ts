@@ -13,6 +13,14 @@ export const WARDROBE_ITEMS: WardrobeItem[] = [
   { id: 'top-1', category: 'tops', src: '/demo-items/tops/black-tshirt.png' },
   { id: 'top-2', category: 'tops', src: '/demo-items/tops/white-crop-top.png' },
   { id: 'top-3', category: 'tops', src: '/demo-items/tops/black-blazer.png' },
+  { id: 'top-4', category: 'tops', src: '/demo-items/tops/beige-sweater.webp' },
+  { id: 'top-5', category: 'tops', src: '/demo-items/tops/blue-sweater.png' },
+  { id: 'top-6', category: 'tops', src: '/demo-items/tops/denim-jacket.png' },
+  { id: 'top-7', category: 'tops', src: '/demo-items/tops/black-tank-top.png' },
+  { id: 'top-8', category: 'tops', src: '/demo-items/tops/red-satin-blouse.png' },
+  { id: 'top-9', category: 'tops', src: '/demo-items/tops/charcoal-hoodie.png' },
+  { id: 'top-10', category: 'tops', src: '/demo-items/tops/cream-bralette.webp' },
+  { id: 'top-11', category: 'tops', src: '/demo-items/tops/white-tshirt.png' },
 
   // ========== BOTTOMS ==========
   { id: 'bottom-1', category: 'bottoms', src: '/demo-items/bottoms/cargo-pants.png' },
