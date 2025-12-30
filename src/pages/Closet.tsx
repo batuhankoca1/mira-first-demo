@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
-import { WARDROBE_ITEMS } from '@/data/wardrobeData';
-import { useDemoWardrobeItems } from '@/hooks/useDemoWardrobeItems';
+import { getItemsByCategory } from '@/data/wardrobeData';
 import { ClothingCategory } from '@/types/clothing';
 import { Menu, User } from 'lucide-react';
 import closetScene from '@/assets/closet-layout-new.png';
@@ -27,8 +26,6 @@ const VISUAL_LABELS = [
 const Closet = () => {
   const navigate = useNavigate();
   const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
-
-  const { getItemsByCategory } = useDemoWardrobeItems(WARDROBE_ITEMS);
 
   const handleShelfTap = (category: ClothingCategory) => {
     setTappedZone(category);

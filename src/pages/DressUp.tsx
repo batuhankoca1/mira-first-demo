@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BottomNav } from '@/components/BottomNav';
-import { AvatarContainerTrimmed } from '@/components/AvatarContainerTrimmed';
-import { WARDROBE_ITEMS, WardrobeItem, CATEGORY_ORDER } from '@/data/wardrobeData';
+import { AvatarContainer } from '@/components/AvatarContainer';
+import { WARDROBE_ITEMS, WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { useDemoWardrobeItems } from '@/hooks/useDemoWardrobeItems';
 import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
 
 const STORAGE_KEY = 'dressup-outfit';
 
-// Simplified to 3 categories only
 interface OutfitState {
   tops: number | null;
   bottoms: number | null;
@@ -29,7 +27,6 @@ const DressUp = () => {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Only load valid keys
         setOutfit({
           tops: parsed.tops ?? null,
           bottoms: parsed.bottoms ?? null,
@@ -45,8 +42,6 @@ const DressUp = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(outfit));
   }, [outfit]);
-
-  const { getItemsByCategory, isProcessing } = useDemoWardrobeItems(WARDROBE_ITEMS);
 
   // Get items for active category
   const categoryItems = getItemsByCategory(activeCategory);
@@ -98,9 +93,9 @@ const DressUp = () => {
       bags: null,
     };
 
-      CATEGORY_ORDER.forEach((cat) => {
-        const items = getItemsByCategory(cat);
-        if (items.length > 0) {
+    CATEGORY_ORDER.forEach((cat) => {
+      const items = getItemsByCategory(cat);
+      if (items.length > 0) {
         // 30% chance of "none" for bags
         if (cat === 'bags' && Math.random() < 0.3) {
           newOutfit[cat] = null;
@@ -119,19 +114,18 @@ const DressUp = () => {
 
     (Object.keys(outfit) as ClothingCategory[]).forEach((cat) => {
       const idx = outfit[cat];
-        if (idx !== null) {
-          const items = getItemsByCategory(cat);
-          result[cat] = items[idx] ?? null;
-        } else {
-          result[cat] = null;
-        }
+      if (idx !== null) {
+        const items = getItemsByCategory(cat);
+        result[cat] = items[idx] ?? null;
+      } else {
+        result[cat] = null;
+      }
     });
 
     return result;
   };
 
   // Current item display
-  const currentItem = currentIndex !== null ? categoryItems[currentIndex] : null;
   const categoryInfo = CATEGORIES.find((c) => c.value === activeCategory);
 
   return (
@@ -144,14 +138,14 @@ const DressUp = () => {
         </div>
       </div>
 
-      {/* Content - flex-1 to fill available space */}
+      {/* Content */}
       <div className="container max-w-md mx-auto px-4 py-4 flex-1 flex flex-col">
-        {/* Avatar - Takes remaining space */}
+        {/* Avatar */}
         <div className="flex-1 min-h-[350px] mb-4">
-          <AvatarContainerTrimmed selectedItems={getSelectedItems()} />
+          <AvatarContainer selectedItems={getSelectedItems()} />
         </div>
 
-        {/* Category Selector - 3 buttons only */}
+        {/* Category Selector */}
         <div className="mb-4">
           <div className="flex gap-2 justify-center">
             {CATEGORIES.map(({ value, label, icon }) => {
@@ -216,7 +210,7 @@ const DressUp = () => {
                     }`}
                     style={{
                       backgroundImage:
-                        'linear-gradient(45deg, #f5f5f5 25%, transparent 25%), linear-gradient(-45deg, #f5f5f5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f5f5f5 75%), linear-gradient(-45deg, transparent 75%, #f5f5f5 75%)',
+                        'linear-gradient(45deg, #f0ebe3 25%, transparent 25%), linear-gradient(-45deg, #f0ebe3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0ebe3 75%), linear-gradient(-45deg, transparent 75%, #f0ebe3 75%)',
                       backgroundSize: '8px 8px',
                       backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
                     }}
@@ -243,16 +237,10 @@ const DressUp = () => {
 
           {/* Current Selection Label */}
           <div className="mt-3 text-center text-sm text-muted-foreground">
-            {isProcessing ? (
-              <span className="font-medium text-foreground">Görseller temizleniyor…</span>
-            ) : (
-              <>
-                {categoryInfo?.icon} {categoryInfo?.label}:{' '}
-                <span className="font-medium text-foreground">
-                  {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
-                </span>
-              </>
-            )}
+            {categoryInfo?.icon} {categoryInfo?.label}:{' '}
+            <span className="font-medium text-foreground">
+              {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
+            </span>
           </div>
         </div>
 
