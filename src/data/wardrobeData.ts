@@ -9,11 +9,20 @@ export interface WardrobeItem {
 // Demo wardrobe with transparent PNG images
 // Using standardized 500x500 canvas approach
 export const WARDROBE_ITEMS: WardrobeItem[] = [
-  // ========== TOPS (1) ==========
+  // ========== TOPS ==========
   { id: 'top-1', category: 'tops', src: '/demo-items/tops/black-tshirt.png' },
+  { id: 'top-2', category: 'tops', src: '/demo-items/tops/white-crop-top.png' },
+  { id: 'top-3', category: 'tops', src: '/demo-items/tops/black-blazer.png' },
 
-  // ========== BOTTOMS (1) ==========
+  // ========== BOTTOMS ==========
   { id: 'bottom-1', category: 'bottoms', src: '/demo-items/bottoms/cargo-pants.png' },
+  { id: 'bottom-2', category: 'bottoms', src: '/demo-items/bottoms/black-pleated-skirt.png' },
+  { id: 'bottom-3', category: 'bottoms', src: '/demo-items/bottoms/black-leggings.png' },
+  { id: 'bottom-4', category: 'bottoms', src: '/demo-items/bottoms/beige-wide-skirt.png' },
+  { id: 'bottom-5', category: 'bottoms', src: '/demo-items/bottoms/red-midi-skirt.png' },
+  { id: 'bottom-6', category: 'bottoms', src: '/demo-items/bottoms/red-mini-skirt.webp' },
+  { id: 'bottom-7', category: 'bottoms', src: '/demo-items/bottoms/denim-skirt.png' },
+  { id: 'bottom-8', category: 'bottoms', src: '/demo-items/bottoms/leather-skirt.webp' },
 ];
 
 // Helper to get items by category
