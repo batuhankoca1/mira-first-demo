@@ -14,20 +14,24 @@ interface LayerConfig {
   left: string;
   width: string;
   zIndex: number;
+  scaleX?: number;
+  scaleY?: number;
 }
 
 const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
   tops: {
     top: '17%',
     left: '16%',
-    width: '68%', // 90% of previous
+    width: '68%',
     zIndex: 20,
   },
   bottoms: {
-    top: '40%',
+    top: '38%',
     left: '22%',
-    width: '58%', // half width
+    width: '58%',
     zIndex: 10,
+    scaleX: 1.5,  // 1.5x wider
+    scaleY: 2.3,  // 2.3x taller
   },
   bags: {
     top: '35%',
@@ -85,6 +89,11 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
           const config = LAYER_CONFIG[category];
           if (!item || !config) return null;
 
+          const hasScale = config.scaleX || config.scaleY;
+          const transform = hasScale 
+            ? `scale(${config.scaleX ?? 1}, ${config.scaleY ?? 1})` 
+            : undefined;
+
           return (
             <img
               key={item.id}
@@ -99,6 +108,8 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
                 height: 'auto',
                 objectFit: 'contain',
                 zIndex: config.zIndex,
+                transform,
+                transformOrigin: 'top left',
               }}
               draggable={false}
             />
