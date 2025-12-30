@@ -1,6 +1,6 @@
 import { WardrobeItem } from '@/data/wardrobeData';
 import { ClothingCategory } from '@/types/clothing';
-import baseAvatar from '@/assets/base-avatar.png';
+import baseAvatar from '@/assets/base-avatar-v2.png';
 
 interface AvatarContainerProps {
   selectedItems: Partial<Record<ClothingCategory, WardrobeItem | null>>;
@@ -30,8 +30,8 @@ const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
     left: '22%',
     width: '58%',
     zIndex: 10,
-    scaleX: 1.5,  // 1.5x wider
-    scaleY: 2.3,  // 2.3x taller
+    scaleX: 1.5,
+    scaleY: 1.84,  // 80% of 2.3
   },
   bags: {
     top: '35%',
