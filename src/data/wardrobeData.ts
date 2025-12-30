@@ -6,23 +6,13 @@ export interface WardrobeItem {
   src: string;
 }
 
-// Demo wardrobe using original v2 images with white backgrounds
-// (mix-blend-mode: multiply will make the white transparent visually)
+// Demo wardrobe with transparent PNG images
 export const WARDROBE_ITEMS: WardrobeItem[] = [
-  // ========== TOPS (4) ==========
-  { id: 'top-1', category: 'tops', src: '/demo-items/tops/top1-cut.png' },
-  { id: 'top-2', category: 'tops', src: '/demo-items/tops/top2-cut.png' },
-  { id: 'top-3', category: 'tops', src: '/demo-items/tops/top3-cut.png' },
-  { id: 'top-4', category: 'tops', src: '/demo-items/tops/top4-cut.png' },
+  // ========== TOPS (1) ==========
+  { id: 'top-1', category: 'tops', src: '/demo-items/tops/black-tshirt.png' },
 
   // ========== BOTTOMS (1) ==========
   { id: 'bottom-1', category: 'bottoms', src: '/demo-items/bottoms/cargo-pants.png' },
-
-  // ========== BAGS (4) ==========
-  { id: 'bag-1', category: 'bags', src: '/demo-items/bags/bag1-cut.png' },
-  { id: 'bag-2', category: 'bags', src: '/demo-items/bags/bag2-cut.png' },
-  { id: 'bag-3', category: 'bags', src: '/demo-items/bags/bag3-cut.png' },
-  { id: 'bag-4', category: 'bags', src: '/demo-items/bags/bag4-cut.png' },
 ];
 
 // Helper to get items by category
