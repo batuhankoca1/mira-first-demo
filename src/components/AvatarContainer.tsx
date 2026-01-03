@@ -116,7 +116,7 @@ export function AvatarContainer({ selectedItems, className = '', isTuckedIn = fa
               key={item.id}
               src={item.src}
               alt={category}
-              className="pointer-events-none"
+              className="pointer-events-none transition-all duration-300 ease-out"
               style={{
                 position: 'absolute',
                 top: config.top,

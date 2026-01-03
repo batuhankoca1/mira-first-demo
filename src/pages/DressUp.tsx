@@ -347,36 +347,41 @@ const DressUp = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-3 mt-2">
-            {/* Tuck In Toggle */}
-            <button
-              onClick={() => setIsTuckedIn((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-lg ${
-                isTuckedIn
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-white text-amber-700 border border-amber-300 hover:bg-amber-50'
-              }`}
-            >
-              {isTuckedIn ? (
-                <>
-                  <ArrowDownToLine className="w-3.5 h-3.5" />
-                  İçe Sık
-                </>
-              ) : (
-                <>
-                  <ArrowUpFromLine className="w-3.5 h-3.5" />
-                  Dışarı Çıkar
-                </>
-              )}
-            </button>
+          {/* Tuck Toggle - Segmented Control */}
+          <div className="flex justify-center mt-2 mb-2">
+            <div className="inline-flex rounded-full bg-amber-100 p-0.5 border border-amber-200 shadow-sm">
+              <button
+                onClick={() => setIsTuckedIn(false)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                  !isTuckedIn
+                    ? 'bg-amber-700 text-white shadow-md'
+                    : 'text-amber-700 hover:bg-amber-200/50'
+                }`}
+              >
+                <ArrowUpFromLine className="w-3.5 h-3.5" />
+                Dışarıda
+              </button>
+              <button
+                onClick={() => setIsTuckedIn(true)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                  isTuckedIn
+                    ? 'bg-amber-700 text-white shadow-md'
+                    : 'text-amber-700 hover:bg-amber-200/50'
+                }`}
+              >
+                <ArrowDownToLine className="w-3.5 h-3.5" />
+                İçeride
+              </button>
+            </div>
+          </div>
 
-            {/* Shuffle Button */}
+          {/* Shuffle Button */}
+          <div className="flex justify-center">
             <button
               onClick={shuffle}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
             >
-              <Shuffle className="w-3.5 h-3.5" />
+              <Shuffle className="w-4 h-4" />
               Karıştır
             </button>
           </div>
