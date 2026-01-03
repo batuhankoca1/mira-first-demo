@@ -15,13 +15,11 @@ const STORAGE_KEY = 'dressup-outfit';
 interface OutfitState {
   tops: number | null;
   bottoms: number | null;
-  bags: number | null;
 }
 
 interface LockedState {
   tops: boolean;
   bottoms: boolean;
-  bags: boolean;
 }
 
 type Environment = 'office' | 'coffee' | 'beach';
@@ -38,12 +36,10 @@ const DressUp = () => {
   const [outfit, setOutfit] = useState<OutfitState>({
     tops: 0,
     bottoms: 0,
-    bags: 0,
   });
   const [locked, setLocked] = useState<LockedState>({
     tops: false,
     bottoms: false,
-    bags: false,
   });
 
   // Load outfit from localStorage
@@ -55,7 +51,6 @@ const DressUp = () => {
         setOutfit({
           tops: parsed.tops ?? null,
           bottoms: parsed.bottoms ?? null,
-          bags: parsed.bags ?? null,
         });
       }
     } catch {
@@ -121,17 +116,11 @@ const DressUp = () => {
       const newOutfit: OutfitState = { ...prev };
 
       CATEGORY_ORDER.forEach((cat) => {
-        // Skip locked categories
         if (locked[cat]) return;
 
         const items = getItemsByCategory(cat);
         if (items.length > 0) {
-          // 30% chance of "none" for bags
-          if (cat === 'bags' && Math.random() < 0.3) {
-            newOutfit[cat] = null;
-          } else {
-            newOutfit[cat] = Math.floor(Math.random() * items.length);
-          }
+          newOutfit[cat] = Math.floor(Math.random() * items.length);
         }
       });
 
@@ -159,7 +148,6 @@ const DressUp = () => {
   // Check if any currently selected item is sponsored
   const activeSponsoredInfo = useMemo((): SponsoredInfo | null => {
     const selectedItems = getSelectedItems();
-    // Check all categories for sponsored items
     for (const cat of CATEGORY_ORDER) {
       const item = selectedItems[cat];
       if (item?.isSponsored && item.sponsoredInfo) {
@@ -218,7 +206,7 @@ const DressUp = () => {
           >
             <AvatarContainer selectedItems={getSelectedItems()} />
             
-            {/* Sponsored Overlay - shows when any active item is sponsored */}
+            {/* Sponsored Overlay */}
             <SponsoredOverlay 
               isVisible={activeSponsoredInfo !== null}
               sponsoredInfo={activeSponsoredInfo || { brand: '', price: '', fabric: '', rating: 0, buyLink: '#' }}
@@ -307,7 +295,7 @@ const DressUp = () => {
                         className="w-full h-full object-contain p-1"
                         draggable={false}
                       />
-                      {/* Sponsored indicator on thumbnail */}
+                      {/* Sponsored indicator */}
                       {item.isSponsored && (
                         <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
                           <Sparkles className="w-2 h-2 text-white" />

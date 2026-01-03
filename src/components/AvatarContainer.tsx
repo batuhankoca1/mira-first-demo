@@ -8,7 +8,6 @@ interface AvatarContainerProps {
 }
 
 // Positioning config for each wearable category
-// All values are percentages relative to the avatar container
 interface LayerConfig {
   top: string;
   left: string;
@@ -18,7 +17,7 @@ interface LayerConfig {
   scaleY?: number;
 }
 
-const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
+const LAYER_CONFIG: Record<ClothingCategory, LayerConfig> = {
   tops: {
     top: '14%',
     left: '16%',
@@ -33,16 +32,10 @@ const LAYER_CONFIG: Partial<Record<ClothingCategory, LayerConfig>> = {
     scaleX: 1.5,
     scaleY: 1.84,
   },
-  bags: {
-    top: '35%',
-    left: '65%',
-    width: '25%',
-    zIndex: 30,
-  },
 };
 
-// Wearable categories that can be rendered on avatar
-const WEARABLE_CATEGORIES: ClothingCategory[] = ['bottoms', 'tops', 'bags'];
+// Render order (z-index: bottom to top)
+const RENDER_ORDER: ClothingCategory[] = ['bottoms', 'tops'];
 
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
   return (
@@ -81,7 +74,7 @@ export function AvatarContainer({ selectedItems, className = '' }: AvatarContain
         />
 
         {/* Clothing layers */}
-        {WEARABLE_CATEGORIES.map((category) => {
+        {RENDER_ORDER.map((category) => {
           const item = selectedItems[category];
           const config = LAYER_CONFIG[category];
           if (!item || !config) return null;

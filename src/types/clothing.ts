@@ -1,15 +1,20 @@
-// All wardrobe categories
-export type ClothingCategory = 'tops' | 'bottoms' | 'bags' | 'shoes' | 'jackets' | 'dresses' | 'accessories';
+// Active clothing categories
+export type ClothingCategory = 'tops' | 'bottoms';
 
-export type AnchorType = 'chest' | 'waist' | 'side';
+// Anchor types for avatar positioning
+export type AnchorType = 'chest' | 'waist';
 
-// Default anchor configs per category (only for avatar-wearable items)
-export const CATEGORY_ANCHORS: Partial<Record<ClothingCategory, { anchorType: AnchorType; anchorOffset: { x: number; y: number }; scale: number }>> = {
+// Default anchor configs per category
+export const CATEGORY_ANCHORS: Record<ClothingCategory, { 
+  anchorType: AnchorType; 
+  anchorOffset: { x: number; y: number }; 
+  scale: number 
+}> = {
   tops: { anchorType: 'chest', anchorOffset: { x: 0, y: 0 }, scale: 1.0 },
   bottoms: { anchorType: 'waist', anchorOffset: { x: 0, y: 0 }, scale: 1.0 },
-  bags: { anchorType: 'side', anchorOffset: { x: 15, y: 10 }, scale: 0.6 },
 };
 
+// Clothing item structure (for user uploads)
 export interface ClothingItem {
   id: string;
   imageUrl: string;
@@ -20,20 +25,15 @@ export interface ClothingItem {
   scale: number;
 }
 
+// Outfit combination
 export interface Outfit {
   id: string;
   top?: ClothingItem;
   bottom?: ClothingItem;
-  bag?: ClothingItem;
 }
 
-// All categories with labels and icons
+// Category display config
 export const CATEGORIES: { value: ClothingCategory; label: string; icon: string }[] = [
   { value: 'tops', label: 'Üstler', icon: '👕' },
   { value: 'bottoms', label: 'Altlar', icon: '👖' },
-  { value: 'bags', label: 'Çantalar', icon: '👜' },
-  { value: 'shoes', label: 'Ayakkabılar', icon: '👟' },
-  { value: 'jackets', label: 'Ceketler', icon: '🧥' },
-  { value: 'dresses', label: 'Elbiseler', icon: '👗' },
-  { value: 'accessories', label: 'Aksesuarlar', icon: '💍' },
 ];

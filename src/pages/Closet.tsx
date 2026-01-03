@@ -7,22 +7,12 @@ import { ClothingCategory } from '@/types/clothing';
 import closetScene from '@/assets/closet-layout-new.png';
 
 // Clickable zones positioned over the text labels in the illustration
-// These are positioned relative to the image container
 const CATEGORY_ZONES: {
   category: ClothingCategory;
   zone: string;
 }[] = [
-  // Top shelf labels
   { category: 'tops', zone: 'top-[12%] left-[18%] w-[14%] h-[5%]' },
   { category: 'bottoms', zone: 'top-[12%] left-[54%] w-[18%] h-[5%]' },
-  // Second row (hanging area labels)
-  { category: 'jackets', zone: 'top-[26%] left-[18%] w-[16%] h-[5%]' },
-  { category: 'dresses', zone: 'top-[26%] left-[54%] w-[16%] h-[5%]' },
-  // Lower sections
-  { category: 'shoes', zone: 'top-[64%] left-[18%] w-[14%] h-[5%]' },
-  { category: 'bags', zone: 'top-[64%] left-[56%] w-[12%] h-[5%]' },
-  // Accessories section (right side)
-  { category: 'accessories', zone: 'top-[72%] left-[54%] w-[20%] h-[5%]' },
 ];
 
 const Closet = () => {
@@ -35,10 +25,6 @@ const Closet = () => {
       setTappedZone(null);
       navigate(`/closet/${category}`);
     }, 100);
-  };
-
-  const getItemCount = (category: ClothingCategory) => {
-    return getItemsByCategory(category).length;
   };
 
   return (
@@ -54,7 +40,7 @@ const Closet = () => {
           draggable={false}
         />
 
-        {/* Invisible clickable zones over the text labels in illustration */}
+        {/* Invisible clickable zones over the text labels */}
         <div className="absolute inset-0 pt-14 pb-20">
           <div className="relative w-full h-full">
             {CATEGORY_ZONES.map(({ category, zone }) => {
