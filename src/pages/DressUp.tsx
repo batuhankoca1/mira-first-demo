@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BottomNav } from '@/components/BottomNav';
+import { AppHeader } from '@/components/AppHeader';
 import { AvatarContainer } from '@/components/AvatarContainer';
 import { WARDROBE_ITEMS, WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella } from 'lucide-react';
 
 const STORAGE_KEY = 'dressup-outfit';
 
@@ -13,8 +14,17 @@ interface OutfitState {
   bags: number | null;
 }
 
+type Environment = 'office' | 'coffee' | 'beach';
+
+const ENVIRONMENTS: { id: Environment; label: string; icon: React.ReactNode; gradient: string }[] = [
+  { id: 'office', label: 'Ofis', icon: <Briefcase className="w-4 h-4" />, gradient: 'from-slate-200 to-slate-300' },
+  { id: 'coffee', label: 'Kahve', icon: <Coffee className="w-4 h-4" />, gradient: 'from-amber-100 to-orange-200' },
+  { id: 'beach', label: 'Plaj', icon: <Umbrella className="w-4 h-4" />, gradient: 'from-sky-200 to-cyan-300' },
+];
+
 const DressUp = () => {
   const [activeCategory, setActiveCategory] = useState<ClothingCategory>('tops');
+  const [environment, setEnvironment] = useState<Environment>('office');
   const [outfit, setOutfit] = useState<OutfitState>({
     tops: 0,
     bottoms: 0,
@@ -128,131 +138,163 @@ const DressUp = () => {
   // Current item display
   const categoryInfo = CATEGORIES.find((c) => c.value === activeCategory);
 
+  // Get background style based on environment
+  const getEnvironmentBackground = () => {
+    switch (environment) {
+      case 'office':
+        return 'bg-gradient-to-b from-slate-200 to-slate-300';
+      case 'coffee':
+        return 'bg-gradient-to-b from-amber-100 to-orange-200';
+      case 'beach':
+        return 'bg-gradient-to-b from-sky-200 to-cyan-300';
+      default:
+        return 'bg-gradient-to-b from-slate-200 to-slate-300';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background pb-28 flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container max-w-md mx-auto px-6 py-4">
-          <h1 className="text-2xl font-serif font-bold text-center">Builder</h1>
-          <p className="text-sm text-muted-foreground text-center">Mix and match your outfits</p>
-        </div>
-      </div>
+    <div className="fixed inset-0 bg-[#fdf6ed] flex flex-col">
+      <AppHeader />
 
       {/* Content */}
-      <div className="container max-w-md mx-auto px-4 py-4 flex-1 flex flex-col">
-        {/* Avatar */}
-        <div className="flex-1 min-h-[350px] mb-4">
-          <AvatarContainer selectedItems={getSelectedItems()} />
-        </div>
-
-        {/* Category Selector */}
-        <div className="mb-4">
-          <div className="flex gap-2 justify-center">
-            {CATEGORIES.map(({ value, label, icon }) => {
-              const isActive = activeCategory === value;
-              const hasItem = outfit[value] !== null;
-
-              return (
-                <button
-                  key={value}
-                  onClick={() => setActiveCategory(value)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : hasItem
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-secondary'
+      <div className="flex-1 overflow-y-auto pt-20 pb-28">
+        <div className="max-w-md mx-auto px-4 py-4 flex flex-col h-full">
+          {/* Environment Buttons */}
+          <div className="flex justify-center gap-3 mb-4">
+            {ENVIRONMENTS.map((env) => (
+              <button
+                key={env.id}
+                onClick={() => setEnvironment(env.id)}
+                className={`flex flex-col items-center gap-1 transition-all ${
+                  environment === env.id ? 'scale-110' : 'opacity-60 hover:opacity-100'
+                }`}
+              >
+                <div
+                  className={`w-12 h-12 rounded-full bg-gradient-to-br ${env.gradient} flex items-center justify-center shadow-md ${
+                    environment === env.id ? 'ring-2 ring-amber-600 ring-offset-2' : ''
                   }`}
                 >
-                  <span className="mr-1.5">{icon}</span>
-                  {label}
-                </button>
-              );
-            })}
+                  <span className="text-amber-900">{env.icon}</span>
+                </div>
+                <span className="text-xs font-medium text-amber-800">{env.label}</span>
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* Item Carousel */}
-        <div className="bg-secondary/30 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            {/* Prev Button */}
-            <button
-              onClick={() => navigate('prev')}
-              className="w-10 h-10 flex-shrink-0 rounded-full bg-background shadow flex items-center justify-center hover:bg-muted transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+          {/* Avatar with environment background */}
+          <div className={`flex-1 min-h-[300px] mb-4 rounded-2xl overflow-hidden transition-all duration-300 ${getEnvironmentBackground()}`}>
+            <AvatarContainer selectedItems={getSelectedItems()} />
+          </div>
 
-            {/* Items Row */}
-            <div className="flex-1 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 justify-center">
-                {/* None option */}
-                <button
-                  onClick={() => selectItem(null)}
-                  className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all flex items-center justify-center ${
-                    currentIndex === null
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border bg-background hover:border-muted-foreground'
-                  }`}
-                >
-                  <span className="text-xs text-muted-foreground">None</span>
-                </button>
+          {/* Category Selector */}
+          <div className="mb-4">
+            <div className="flex gap-2 justify-center">
+              {CATEGORIES.map(({ value, label, icon }) => {
+                const isActive = activeCategory === value;
+                const hasItem = outfit[value] !== null;
 
-                {/* Category items */}
-                {categoryItems.map((item, idx) => (
+                return (
                   <button
-                    key={item.id}
-                    onClick={() => selectItem(idx)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all overflow-hidden ${
-                      currentIndex === idx
-                        ? 'border-primary shadow-md'
-                        : 'border-border bg-background hover:border-muted-foreground'
+                    key={value}
+                    onClick={() => setActiveCategory(value)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-amber-700 text-white shadow-md'
+                        : hasItem
+                        ? 'bg-amber-200 text-amber-900'
+                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                     }`}
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(45deg, #f0ebe3 25%, transparent 25%), linear-gradient(-45deg, #f0ebe3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0ebe3 75%), linear-gradient(-45deg, transparent 75%, #f0ebe3 75%)',
-                      backgroundSize: '8px 8px',
-                      backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
-                    }}
                   >
-                    <img
-                      src={item.src}
-                      alt={item.category}
-                      className="w-full h-full object-contain p-1"
-                      draggable={false}
-                    />
+                    <span className="mr-1.5">{icon}</span>
+                    {label}
                   </button>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Item Carousel */}
+          <div className="bg-white/50 rounded-2xl p-4 border border-amber-200/50">
+            <div className="flex items-center gap-3">
+              {/* Prev Button */}
+              <button
+                onClick={() => navigate('prev')}
+                className="w-10 h-10 flex-shrink-0 rounded-full bg-white shadow flex items-center justify-center hover:bg-amber-50 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-amber-800" />
+              </button>
+
+              {/* Items Row */}
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 justify-center">
+                  {/* None option */}
+                  <button
+                    onClick={() => selectItem(null)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all flex items-center justify-center ${
+                      currentIndex === null
+                        ? 'border-amber-600 bg-amber-100'
+                        : 'border-amber-200 bg-white hover:border-amber-400'
+                    }`}
+                  >
+                    <span className="text-xs text-amber-700">None</span>
+                  </button>
+
+                  {/* Category items */}
+                  {categoryItems.map((item, idx) => (
+                    <button
+                      key={item.id}
+                      onClick={() => selectItem(idx)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all overflow-hidden ${
+                        currentIndex === idx
+                          ? 'border-amber-600 shadow-md'
+                          : 'border-amber-200 bg-white hover:border-amber-400'
+                      }`}
+                      style={{
+                        backgroundImage:
+                          'linear-gradient(45deg, #f0ebe3 25%, transparent 25%), linear-gradient(-45deg, #f0ebe3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0ebe3 75%), linear-gradient(-45deg, transparent 75%, #f0ebe3 75%)',
+                        backgroundSize: '8px 8px',
+                        backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+                      }}
+                    >
+                      <img
+                        src={item.src}
+                        alt={item.category}
+                        className="w-full h-full object-contain p-1"
+                        draggable={false}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => navigate('next')}
+                className="w-10 h-10 flex-shrink-0 rounded-full bg-white shadow flex items-center justify-center hover:bg-amber-50 transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-amber-800" />
+              </button>
             </div>
 
-            {/* Next Button */}
+            {/* Current Selection Label */}
+            <div className="mt-3 text-center text-sm text-amber-800/70">
+              {categoryInfo?.icon} {categoryInfo?.label}:{' '}
+              <span className="font-medium text-amber-900">
+                {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
+              </span>
+            </div>
+          </div>
+
+          {/* Shuffle Button */}
+          <div className="flex justify-center mt-4">
             <button
-              onClick={() => navigate('next')}
-              className="w-10 h-10 flex-shrink-0 rounded-full bg-background shadow flex items-center justify-center hover:bg-muted transition-colors"
+              onClick={shuffle}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-amber-700 text-white font-medium hover:bg-amber-800 transition-colors shadow-lg"
             >
-              <ChevronRight className="w-5 h-5" />
+              <Shuffle className="w-4 h-4" />
+              Shuffle Outfit
             </button>
           </div>
-
-          {/* Current Selection Label */}
-          <div className="mt-3 text-center text-sm text-muted-foreground">
-            {categoryInfo?.icon} {categoryInfo?.label}:{' '}
-            <span className="font-medium text-foreground">
-              {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
-            </span>
-          </div>
-        </div>
-
-        {/* Shuffle Button */}
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={shuffle}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-lg"
-          >
-            <Shuffle className="w-4 h-4" />
-            Shuffle Outfit
-          </button>
         </div>
       </div>
 
