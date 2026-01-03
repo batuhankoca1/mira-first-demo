@@ -6,11 +6,8 @@ export type Wardrobe = Partial<Record<ClothingCategory, ClothingItem[]>>;
 
 const STORAGE_KEY = "mira-wardrobe-v2";
 
-// Wearable categories for the avatar
-const WEARABLE_CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags"];
-
-// All possible categories
-const ALL_CATEGORIES: ClothingCategory[] = ["tops", "bottoms", "bags", "shoes", "jackets", "dresses", "accessories"];
+// Active categories
+const ALL_CATEGORIES: ClothingCategory[] = ["tops", "bottoms"];
 
 function createEmptyWardrobe(): Wardrobe {
   return {};
@@ -23,7 +20,7 @@ function normalizeWardrobe(input: any): Wardrobe {
   for (const cat of ALL_CATEGORIES) {
     const arr = Array.isArray(input[cat]) ? input[cat] : [];
     const defaults = CATEGORY_ANCHORS[cat];
-    if (!defaults) continue; // Skip categories without anchor config
+    if (!defaults) continue;
     
     base[cat] = arr
       .filter(Boolean)
@@ -69,11 +66,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
     
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      console.log("[Wardrobe] Loading from storage, found:", !!stored);
       if (stored) {
         const parsed = JSON.parse(stored);
         const normalized = normalizeWardrobe(parsed);
-        console.log("[Wardrobe] Loaded items:", WEARABLE_CATEGORIES.map(c => `${c}: ${(normalized[c] ?? []).length}`).join(", "));
         setWardrobe(normalized);
       }
     } catch (e) {
@@ -92,7 +87,6 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         }));
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
-      console.log("[Wardrobe] Persisted to storage");
     } catch (e) {
       console.error("[Wardrobe] Failed to persist:", e);
     }
@@ -116,8 +110,6 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         scale: typeof overrides?.scale === "number" ? overrides.scale : defaults.scale,
       };
 
-      console.log("[Wardrobe] Adding item:", newItem.id, "to", category);
-
       setWardrobe((prev) => {
         const next: Wardrobe = {
           ...prev,
@@ -134,7 +126,6 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
 
   const removeItem = useCallback(
     (id: string) => {
-      console.log("[Wardrobe] Removing item:", id);
       setWardrobe((prev) => {
         const next: Wardrobe = createEmptyWardrobe();
         for (const cat of ALL_CATEGORIES) {

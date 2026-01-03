@@ -17,11 +17,10 @@ interface PhotoUploadProps {
   defaultCategory?: ClothingCategory;
 }
 
-// Layer positions matching Avatar2D (percentage-based) - only wearable categories
-const LAYER_POSITIONS: Partial<Record<ClothingCategory, { top: string; height: string; width: string; left?: string }>> = {
+// Layer positions matching Avatar (percentage-based)
+const LAYER_POSITIONS: Record<ClothingCategory, { top: string; height: string; width: string; left?: string }> = {
   tops: { top: "22%", height: "28%", width: "50%" },
   bottoms: { top: "48%", height: "26%", width: "45%" },
-  bags: { top: "40%", height: "20%", width: "25%" },
 };
 
 function clamp01(v: number) {
@@ -90,11 +89,9 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
 
     lastFileRef.current = file;
 
-    // show original immediately
     const originalObjectUrl = URL.createObjectURL(file);
     setPreviewUrl(originalObjectUrl);
 
-    // default is NO background removal; only auto-crop bbox
     setUseManualCrop(false);
     setManualCrop({ x: 0.05, y: 0.05, w: 0.9, h: 0.9 });
 
@@ -103,7 +100,6 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
     URL.revokeObjectURL(originalObjectUrl);
   };
 
-  // bottoms scaling: based on bbox height relative to crop max-dim (not absolute pixels)
   const computeBottomsScaleOverride = (): number | undefined => {
     if (selectedCategory !== "bottoms") return undefined;
     if (!detectedBBox) return undefined;
@@ -111,7 +107,6 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
     const maxDim = Math.max(detectedBBox.w, detectedBBox.h);
     const heightNormalized = maxDim > 0 ? (detectedBBox.h / maxDim) * 0.92 : 0.92;
 
-    // We want bottoms to mostly fill the bottoms layer height; scale derived from garment height ratio.
     const desiredFill = 0.95;
     const s = desiredFill / Math.max(0.15, heightNormalized);
     return clamp(s, 0.75, 1.35);
@@ -276,7 +271,7 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
             </div>
           )}
 
-          {/* Manual crop controls (rectangle only) */}
+          {/* Manual crop controls */}
           {lastFileRef.current && (
             <div className="mb-4 p-3 rounded-xl border border-border bg-card">
               <div className="flex items-center justify-between">
@@ -365,7 +360,7 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
             </div>
           )}
 
-          {/* Debug view: original / bbox / sprite */}
+          {/* Debug view */}
           {debug && (
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="space-y-1">
@@ -399,53 +394,43 @@ export function PhotoUpload({ onSaved, onClose, defaultCategory = "tops" }: Phot
                   onClick={() => setSelectedCategory(cat.value)}
                   disabled={isProcessing}
                   className={cn(
-                    "px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+                    "px-4 py-2 rounded-full text-sm font-medium transition-all",
                     selectedCategory === cat.value
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-soft"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   )}
                 >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
+                  <span className="mr-1.5">{cat.icon}</span>
+                  {cat.label}
                 </button>
               ))}
             </div>
           </div>
-
-          {isReadyToSave && (
-            <div className="mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm text-center">
-              ✓ Sprite hazır. Aşağıdan kaydet.
-            </div>
-          )}
         </div>
 
-        {/* Fixed bottom actions */}
-        <div className="p-4 border-t border-border bg-background pb-safe">
-          <div className="flex gap-3">
-            {previewUrl && (
+        {/* Footer */}
+        <div className="p-4 border-t border-border flex gap-3">
+          {isReadyToSave ? (
+            <>
               <Button variant="secondary" className="flex-1" onClick={handleRetake} disabled={isProcessing}>
-                Yeniden Seç
+                Yeniden Çek
               </Button>
-            )}
+              <Button variant="default" className="flex-1" onClick={handleSave} disabled={isProcessing}>
+                <Check className="w-4 h-4 mr-2" />
+                Kaydet
+              </Button>
+            </>
+          ) : (
             <Button
               variant="default"
-              className={cn("flex-1 gap-2", isReadyToSave && "bg-green-600 hover:bg-green-700")}
-              disabled={!isReadyToSave || isProcessing}
-              onClick={handleSave}
+              className="flex-1"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessing}
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {processingStatus || "İşleniyor..."}
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  Kaydet
-                </>
-              )}
+              <Camera className="w-4 h-4 mr-2" />
+              Fotoğraf Seç
             </Button>
-          </div>
+          )}
         </div>
       </div>
     </div>
