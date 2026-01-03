@@ -47,15 +47,12 @@ const WEARABLE_CATEGORIES: ClothingCategory[] = ['bottoms', 'tops', 'bags'];
 export function AvatarContainer({ selectedItems, className = '' }: AvatarContainerProps) {
   return (
     <div
-      className={`w-full ${className}`}
+      className={`w-full h-full ${className}`}
       style={{
         position: 'relative',
-        width: '100%',
-        height: '75vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-end',
-        backgroundColor: 'transparent',
         overflow: 'hidden',
       }}
     >
