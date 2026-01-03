@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Closet from "./pages/Closet";
 import CategoryDetail from "./pages/CategoryDetail";
 import DressUp from "./pages/DressUp";
+import AIStylist from "./pages/AIStylist";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/closet" element={<Closet />} />
             <Route path="/closet/:category" element={<CategoryDetail />} />
             <Route path="/dressup" element={<DressUp />} />
+            <Route path="/stylist" element={<AIStylist />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
