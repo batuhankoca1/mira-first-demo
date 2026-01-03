@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { AppHeader } from '@/components/AppHeader';
 import { AvatarContainer } from '@/components/AvatarContainer';
-import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
+import { SponsoredOverlay } from '@/components/SponsoredOverlay';
+import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER, SponsoredInfo } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles } from 'lucide-react';
 import bgOffice from '@/assets/bg-office.jpg';
 import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
@@ -155,6 +156,19 @@ const DressUp = () => {
     return result;
   };
 
+  // Check if any currently selected item is sponsored
+  const activeSponsoredInfo = useMemo((): SponsoredInfo | null => {
+    const selectedItems = getSelectedItems();
+    // Check all categories for sponsored items
+    for (const cat of CATEGORY_ORDER) {
+      const item = selectedItems[cat];
+      if (item?.isSponsored && item.sponsoredInfo) {
+        return item.sponsoredInfo;
+      }
+    }
+    return null;
+  }, [outfit]);
+
   // Current item display
   const categoryInfo = CATEGORIES.find((c) => c.value === activeCategory);
   const currentEnv = ENVIRONMENTS.find((e) => e.id === environment);
@@ -203,6 +217,12 @@ const DressUp = () => {
             }}
           >
             <AvatarContainer selectedItems={getSelectedItems()} />
+            
+            {/* Sponsored Overlay - shows when any active item is sponsored */}
+            <SponsoredOverlay 
+              isVisible={activeSponsoredInfo !== null}
+              sponsoredInfo={activeSponsoredInfo || { brand: '', price: '', fabric: '', rating: 0, buyLink: '#' }}
+            />
           </div>
 
           {/* Category Selector with Lock */}
@@ -267,9 +287,11 @@ const DressUp = () => {
                     <button
                       key={item.id}
                       onClick={() => selectItem(idx)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all overflow-hidden ${
+                      className={`relative flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all overflow-hidden ${
                         currentIndex === idx
-                          ? 'border-amber-600 shadow-md'
+                          ? item.isSponsored
+                            ? 'border-amber-500 shadow-md ring-2 ring-amber-400/50'
+                            : 'border-amber-600 shadow-md'
                           : 'border-amber-200 bg-white hover:border-amber-400'
                       }`}
                       style={{
@@ -285,6 +307,12 @@ const DressUp = () => {
                         className="w-full h-full object-contain p-1"
                         draggable={false}
                       />
+                      {/* Sponsored indicator on thumbnail */}
+                      {item.isSponsored && (
+                        <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
+                          <Sparkles className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
