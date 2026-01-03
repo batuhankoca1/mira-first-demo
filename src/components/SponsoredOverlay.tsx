@@ -21,7 +21,7 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
       >
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-medium shadow-md">
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          Sponsored
+          Sponsorlu
         </span>
       </div>
 
@@ -50,7 +50,7 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
           {/* CTA Button */}
           <a href={sponsoredInfo.buyLink} className="block mt-2">
             <button className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-foreground text-background font-medium text-[10px] shadow hover:scale-105 transition-transform active:scale-95">
-              <span>BUY NOW</span>
+              <span>SATIN AL</span>
               <ExternalLink className="w-3 h-3" />
             </button>
           </a>

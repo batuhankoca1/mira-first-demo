@@ -279,7 +279,7 @@ const DressUp = () => {
                         : 'border-amber-200 bg-white hover:border-amber-400'
                     }`}
                   >
-                    <span className="text-xs text-amber-700">None</span>
+                    <span className="text-xs text-amber-700">Yok</span>
                   </button>
 
                   {/* Category items */}
@@ -332,7 +332,7 @@ const DressUp = () => {
               <div className="text-xs text-amber-800/70">
                 {categoryInfo?.icon} {categoryInfo?.label}:{' '}
                 <span className="font-medium text-amber-900">
-                  {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
+                  {currentIndex !== null ? `Parça ${currentIndex + 1}` : 'Yok'}
                 </span>
               </div>
               <button
@@ -365,7 +365,7 @@ const DressUp = () => {
               className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
             >
               <Shuffle className="w-3.5 h-3.5" />
-              Shuffle Outfit
+              Karıştır
             </button>
           </div>
         </div>

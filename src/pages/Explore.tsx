@@ -14,27 +14,27 @@ const Explore = () => {
             <div className="w-24 h-24 rounded-full bg-amber-100 flex items-center justify-center mb-6">
               <Compass className="w-10 h-10 text-amber-700" />
             </div>
-            <h2 className="text-xl font-serif font-semibold text-amber-900 mb-2">Coming Soon</h2>
+            <h2 className="text-xl font-serif font-semibold text-amber-900 mb-2">Çok Yakında</h2>
             <p className="text-amber-800/70 mb-8 max-w-[280px]">
-              Discover trending styles, outfit inspiration, and connect with the fashion community
+              Trend stilleri keşfet, kombin ilhamı al ve moda topluluğuyla bağlantı kur
             </p>
 
             {/* Preview features */}
             <div className="w-full space-y-3">
               <PreviewFeature
                 icon={TrendingUp}
-                title="Trending Styles"
-                description="See what's popular this season"
+                title="Trend Stiller"
+                description="Bu sezonun popüler parçalarını gör"
               />
               <PreviewFeature
                 icon={Sparkles}
-                title="Style Inspiration"
-                description="Get outfit ideas based on your closet"
+                title="Stil İlhamı"
+                description="Dolabına göre kombin fikirleri al"
               />
               <PreviewFeature
                 icon={Users}
-                title="Community"
-                description="Share looks and get feedback"
+                title="Topluluk"
+                description="Kombinlerini paylaş ve geri bildirim al"
               />
             </div>
           </div>

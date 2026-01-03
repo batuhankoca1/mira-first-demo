@@ -8,7 +8,7 @@ const Profile = () => {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container max-w-md mx-auto px-6 py-4">
-          <h1 className="text-2xl font-serif font-bold text-center">Profile</h1>
+          <h1 className="text-2xl font-serif font-bold text-center">Profil</h1>
         </div>
       </div>
 
@@ -19,32 +19,32 @@ const Profile = () => {
           <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mb-4 border-4 border-card shadow-elevated">
             <User className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-serif font-semibold">Guest User</h2>
-          <p className="text-sm text-muted-foreground">Your style journey awaits</p>
+          <h2 className="text-xl font-serif font-semibold">Misafir Kullanıcı</h2>
+          <p className="text-sm text-muted-foreground">Stil yolculuğun seni bekliyor</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <StatCard label="Items" value="0" />
-          <StatCard label="Outfits" value="0" />
-          <StatCard label="Favorites" value="0" />
+          <StatCard label="Parça" value="0" />
+          <StatCard label="Kombin" value="0" />
+          <StatCard label="Favori" value="0" />
         </div>
 
         {/* Menu */}
         <div className="space-y-2">
-          <MenuItem icon={Heart} label="Saved Outfits" badge="Coming soon" />
-          <MenuItem icon={ShoppingBag} label="My Purchases" badge="Coming soon" />
-          <MenuItem icon={Bell} label="Notifications" badge="Coming soon" />
-          <MenuItem icon={Settings} label="Settings" badge="Coming soon" />
+          <MenuItem icon={Heart} label="Kayıtlı Kombinler" badge="Yakında" />
+          <MenuItem icon={ShoppingBag} label="Satın Alımlarım" badge="Yakında" />
+          <MenuItem icon={Bell} label="Bildirimler" badge="Yakında" />
+          <MenuItem icon={Settings} label="Ayarlar" badge="Yakında" />
         </div>
 
         {/* Login prompt */}
         <div className="mt-8 p-6 rounded-2xl bg-card border border-border/50 text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            Sign in to save your closet across devices
+            Dolabını tüm cihazlarında senkronize etmek için giriş yap
           </p>
           <Button variant="outline" className="w-full" disabled>
-            Sign In — Coming Soon
+            Giriş Yap — Yakında
           </Button>
         </div>
       </div>
