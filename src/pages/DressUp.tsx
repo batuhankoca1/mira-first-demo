@@ -5,7 +5,7 @@ import { AvatarContainer } from '@/components/AvatarContainer';
 import { SponsoredOverlay } from '@/components/SponsoredOverlay';
 import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER, SponsoredInfo } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import bgOffice from '@/assets/bg-office.jpg';
 import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
@@ -41,6 +41,7 @@ const DressUp = () => {
     tops: false,
     bottoms: false,
   });
+  const [isTuckedIn, setIsTuckedIn] = useState(false);
 
   // Load outfit from localStorage
   useEffect(() => {
@@ -204,7 +205,7 @@ const DressUp = () => {
               backgroundPosition: 'center',
             }}
           >
-            <AvatarContainer selectedItems={getSelectedItems()} />
+            <AvatarContainer selectedItems={getSelectedItems()} isTuckedIn={isTuckedIn} />
             
             {/* Sponsored Overlay */}
             <SponsoredOverlay 
@@ -346,8 +347,31 @@ const DressUp = () => {
             </div>
           </div>
 
-          {/* Shuffle Button */}
-          <div className="flex justify-center mt-2">
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3 mt-2">
+            {/* Tuck In Toggle */}
+            <button
+              onClick={() => setIsTuckedIn((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-lg ${
+                isTuckedIn
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-white text-amber-700 border border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              {isTuckedIn ? (
+                <>
+                  <ArrowDownToLine className="w-3.5 h-3.5" />
+                  İçe Sık
+                </>
+              ) : (
+                <>
+                  <ArrowUpFromLine className="w-3.5 h-3.5" />
+                  Dışarı Çıkar
+                </>
+              )}
+            </button>
+
+            {/* Shuffle Button */}
             <button
               onClick={shuffle}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
