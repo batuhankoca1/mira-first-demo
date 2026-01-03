@@ -2,9 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { AppHeader } from '@/components/AppHeader';
 import { AvatarContainer } from '@/components/AvatarContainer';
-import { WARDROBE_ITEMS, WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
+import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen } from 'lucide-react';
+import bgOffice from '@/assets/bg-office.jpg';
+import bgCoffee from '@/assets/bg-coffee.jpg';
+import bgBeach from '@/assets/bg-beach.jpg';
 
 const STORAGE_KEY = 'dressup-outfit';
 
@@ -14,12 +17,18 @@ interface OutfitState {
   bags: number | null;
 }
 
+interface LockedState {
+  tops: boolean;
+  bottoms: boolean;
+  bags: boolean;
+}
+
 type Environment = 'office' | 'coffee' | 'beach';
 
-const ENVIRONMENTS: { id: Environment; label: string; icon: React.ReactNode; gradient: string }[] = [
-  { id: 'office', label: 'Ofis', icon: <Briefcase className="w-4 h-4" />, gradient: 'from-slate-200 to-slate-300' },
-  { id: 'coffee', label: 'Kahve', icon: <Coffee className="w-4 h-4" />, gradient: 'from-amber-100 to-orange-200' },
-  { id: 'beach', label: 'Plaj', icon: <Umbrella className="w-4 h-4" />, gradient: 'from-sky-200 to-cyan-300' },
+const ENVIRONMENTS: { id: Environment; label: string; icon: React.ReactNode; bg: string }[] = [
+  { id: 'office', label: 'Ofis', icon: <Briefcase className="w-4 h-4" />, bg: bgOffice },
+  { id: 'coffee', label: 'Kahve', icon: <Coffee className="w-4 h-4" />, bg: bgCoffee },
+  { id: 'beach', label: 'Plaj', icon: <Umbrella className="w-4 h-4" />, bg: bgBeach },
 ];
 
 const DressUp = () => {
@@ -29,6 +38,11 @@ const DressUp = () => {
     tops: 0,
     bottoms: 0,
     bags: 0,
+  });
+  const [locked, setLocked] = useState<LockedState>({
+    tops: false,
+    bottoms: false,
+    bags: false,
   });
 
   // Load outfit from localStorage
@@ -60,6 +74,11 @@ const DressUp = () => {
   // Select item by index
   const selectItem = (index: number | null) => {
     setOutfit((prev) => ({ ...prev, [activeCategory]: index }));
+  };
+
+  // Toggle lock for active category
+  const toggleLock = () => {
+    setLocked((prev) => ({ ...prev, [activeCategory]: !prev[activeCategory] }));
   };
 
   // Navigate within category
@@ -95,28 +114,29 @@ const DressUp = () => {
     [activeCategory]
   );
 
-  // Shuffle all categories
+  // Shuffle only unlocked categories
   const shuffle = useCallback(() => {
-    const newOutfit: OutfitState = {
-      tops: null,
-      bottoms: null,
-      bags: null,
-    };
+    setOutfit((prev) => {
+      const newOutfit: OutfitState = { ...prev };
 
-    CATEGORY_ORDER.forEach((cat) => {
-      const items = getItemsByCategory(cat);
-      if (items.length > 0) {
-        // 30% chance of "none" for bags
-        if (cat === 'bags' && Math.random() < 0.3) {
-          newOutfit[cat] = null;
-        } else {
-          newOutfit[cat] = Math.floor(Math.random() * items.length);
+      CATEGORY_ORDER.forEach((cat) => {
+        // Skip locked categories
+        if (locked[cat]) return;
+
+        const items = getItemsByCategory(cat);
+        if (items.length > 0) {
+          // 30% chance of "none" for bags
+          if (cat === 'bags' && Math.random() < 0.3) {
+            newOutfit[cat] = null;
+          } else {
+            newOutfit[cat] = Math.floor(Math.random() * items.length);
+          }
         }
-      }
-    });
+      });
 
-    setOutfit(newOutfit);
-  }, []);
+      return newOutfit;
+    });
+  }, [locked]);
 
   // Build selected items map for AvatarContainer
   const getSelectedItems = (): Partial<Record<ClothingCategory, WardrobeItem | null>> => {
@@ -137,20 +157,7 @@ const DressUp = () => {
 
   // Current item display
   const categoryInfo = CATEGORIES.find((c) => c.value === activeCategory);
-
-  // Get background style based on environment
-  const getEnvironmentBackground = () => {
-    switch (environment) {
-      case 'office':
-        return 'bg-gradient-to-b from-slate-200 to-slate-300';
-      case 'coffee':
-        return 'bg-gradient-to-b from-amber-100 to-orange-200';
-      case 'beach':
-        return 'bg-gradient-to-b from-sky-200 to-cyan-300';
-      default:
-        return 'bg-gradient-to-b from-slate-200 to-slate-300';
-    }
-  };
+  const currentEnv = ENVIRONMENTS.find((e) => e.id === environment);
 
   return (
     <div className="fixed inset-0 bg-[#fdf6ed] flex flex-col">
@@ -170,11 +177,16 @@ const DressUp = () => {
                 }`}
               >
                 <div
-                  className={`w-12 h-12 rounded-full bg-gradient-to-br ${env.gradient} flex items-center justify-center shadow-md ${
+                  className={`w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shadow-md ${
                     environment === env.id ? 'ring-2 ring-amber-600 ring-offset-2' : ''
                   }`}
+                  style={{
+                    backgroundImage: `url(${env.bg})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                 >
-                  <span className="text-amber-900">{env.icon}</span>
+                  <span className="text-white drop-shadow-lg">{env.icon}</span>
                 </div>
                 <span className="text-xs font-medium text-amber-800">{env.label}</span>
               </button>
@@ -182,22 +194,30 @@ const DressUp = () => {
           </div>
 
           {/* Avatar with environment background */}
-          <div className={`flex-1 min-h-[300px] mb-4 rounded-2xl overflow-hidden transition-all duration-300 ${getEnvironmentBackground()}`}>
+          <div
+            className="flex-1 min-h-[320px] mb-4 rounded-2xl overflow-hidden transition-all duration-500 relative"
+            style={{
+              backgroundImage: `url(${currentEnv?.bg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
             <AvatarContainer selectedItems={getSelectedItems()} />
           </div>
 
-          {/* Category Selector */}
+          {/* Category Selector with Lock */}
           <div className="mb-4">
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center items-center">
               {CATEGORIES.map(({ value, label, icon }) => {
                 const isActive = activeCategory === value;
                 const hasItem = outfit[value] !== null;
+                const isLocked = locked[value];
 
                 return (
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
@@ -207,6 +227,9 @@ const DressUp = () => {
                   >
                     <span className="mr-1.5">{icon}</span>
                     {label}
+                    {isLocked && (
+                      <Lock className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-600 bg-white rounded-full p-0.5" />
+                    )}
                   </button>
                 );
               })}
@@ -276,12 +299,34 @@ const DressUp = () => {
               </button>
             </div>
 
-            {/* Current Selection Label */}
-            <div className="mt-3 text-center text-sm text-amber-800/70">
-              {categoryInfo?.icon} {categoryInfo?.label}:{' '}
-              <span className="font-medium text-amber-900">
-                {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
-              </span>
+            {/* Current Selection Label + Lock Button */}
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <div className="text-sm text-amber-800/70">
+                {categoryInfo?.icon} {categoryInfo?.label}:{' '}
+                <span className="font-medium text-amber-900">
+                  {currentIndex !== null ? `Item ${currentIndex + 1}` : 'None'}
+                </span>
+              </div>
+              <button
+                onClick={toggleLock}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                  locked[activeCategory]
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                }`}
+              >
+                {locked[activeCategory] ? (
+                  <>
+                    <Lock className="w-3 h-3" />
+                    Kilitli
+                  </>
+                ) : (
+                  <>
+                    <LockOpen className="w-3 h-3" />
+                    Kilitle
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
