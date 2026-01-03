@@ -18,9 +18,14 @@ const CATEGORY_MATCHES: Record<InspirationCategory, { topId: string; bottomId: s
   oldmoney: { topId: 'top-3', bottomId: 'bottom-4' }, // Black blazer + Beige wide skirt
 };
 
-// Inspiration looks data - add more as images are uploaded
+// Inspiration looks data
 export const INSPIRATION_LOOKS: InspirationLook[] = [
-  // Casual
+  // Casual (12 items)
+  { id: 'casual-1', src: '/explore/explore-casual-1.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
+  { id: 'casual-2', src: '/explore/explore-casual-2.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
+  { id: 'casual-3', src: '/explore/explore-casual-3.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
+  { id: 'casual-4', src: '/explore/explore-casual-4.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
+  { id: 'casual-5', src: '/explore/explore-casual-5.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
   { id: 'casual-6', src: '/explore/explore-casual-6.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
   { id: 'casual-10', src: '/explore/explore-casual-10.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
   { id: 'casual-11', src: '/explore/explore-casual-11.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
@@ -29,12 +34,19 @@ export const INSPIRATION_LOOKS: InspirationLook[] = [
   { id: 'casual-15', src: '/explore/explore-casual-15.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
   { id: 'casual-16', src: '/explore/explore-casual-16.png', category: 'casual', matchingItems: CATEGORY_MATCHES.casual },
   
-  // Date Night
+  // Date Night (6 items)
+  { id: 'datenight-1', src: '/explore/explore-datenight-1.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
+  { id: 'datenight-2', src: '/explore/explore-datenight-2.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
+  { id: 'datenight-3', src: '/explore/explore-datenight-3.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
+  { id: 'datenight-4', src: '/explore/explore-datenight-4.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
   { id: 'datenight-6', src: '/explore/explore-datenight-6.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
   { id: 'datenight-7', src: '/explore/explore-datenight-7.png', category: 'datenight', matchingItems: CATEGORY_MATCHES.datenight },
   
-  // Sports
+  // Sports (1 item)
   { id: 'sports-1', src: '/explore/explore-sports-1.png', category: 'sports', matchingItems: CATEGORY_MATCHES.sports },
+  
+  // Old Money (1 item)
+  { id: 'oldmoney-3', src: '/explore/explore-oldmoney-3.png', category: 'oldmoney', matchingItems: CATEGORY_MATCHES.oldmoney },
 ];
 
 export const CATEGORY_LABELS: Record<InspirationCategory | 'all', string> = {
