@@ -1,6 +1,6 @@
 import { WardrobeItem } from '@/data/wardrobeData';
 import { ClothingCategory } from '@/types/clothing';
-import baseAvatar from '@/assets/avatar-transparent.png';
+import baseAvatar from '@/assets/base-avatar-v2.png';
 
 interface AvatarContainerProps {
   selectedItems: Partial<Record<ClothingCategory, WardrobeItem | null>>;
