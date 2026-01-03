@@ -5,7 +5,7 @@ import { AvatarContainer } from '@/components/AvatarContainer';
 import { SponsoredOverlay } from '@/components/SponsoredOverlay';
 import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER, SponsoredInfo } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles, Layers } from 'lucide-react';
 import bgOffice from '@/assets/bg-office.jpg';
 import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
@@ -347,39 +347,25 @@ const DressUp = () => {
             </div>
           </div>
 
-          {/* Tuck Toggle - Segmented Control */}
-          <div className="flex justify-center mt-2 mb-2">
-            <div className="inline-flex rounded-full bg-amber-100 p-0.5 border border-amber-200 shadow-sm">
-              <button
-                onClick={() => setIsTuckedIn(false)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                  !isTuckedIn
-                    ? 'bg-amber-700 text-white shadow-md'
-                    : 'text-amber-700 hover:bg-amber-200/50'
-                }`}
-              >
-                <ArrowUpFromLine className="w-3.5 h-3.5" />
-                Dışarıda
-              </button>
-              <button
-                onClick={() => setIsTuckedIn(true)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                  isTuckedIn
-                    ? 'bg-amber-700 text-white shadow-md'
-                    : 'text-amber-700 hover:bg-amber-200/50'
-                }`}
-              >
-                <ArrowDownToLine className="w-3.5 h-3.5" />
-                İçeride
-              </button>
-            </div>
-          </div>
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3 mt-2">
+            {/* Tuck Toggle - Single Button */}
+            <button
+              onClick={() => setIsTuckedIn((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border shadow-sm ${
+                isTuckedIn
+                  ? 'bg-amber-700 text-white border-amber-700'
+                  : 'bg-transparent text-amber-700 border-amber-400 hover:bg-amber-50'
+              }`}
+            >
+              <Layers className={`w-4 h-4 transition-transform duration-200 ${isTuckedIn ? 'rotate-180' : ''}`} />
+              {isTuckedIn ? 'İçeride' : 'Dışarıda'}
+            </button>
 
-          {/* Shuffle Button */}
-          <div className="flex justify-center">
+            {/* Shuffle Button */}
             <button
               onClick={shuffle}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
             >
               <Shuffle className="w-4 h-4" />
               Karıştır
