@@ -13,7 +13,7 @@ const CategoryDetail = () => {
   if (!validCategory) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Category not found</p>
+        <p className="text-muted-foreground">Kategori bulunamadı</p>
       </div>
     );
   }
@@ -48,7 +48,7 @@ const CategoryDetail = () => {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-amber-700/50">
             <span className="text-6xl mb-4">{validCategory.icon}</span>
-            <p className="font-medium">No items in this category yet</p>
+            <p className="font-medium">Bu kategoride henüz parça yok</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">

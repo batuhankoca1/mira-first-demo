@@ -49,7 +49,7 @@ const Closet = () => {
       <div className="relative w-full h-full max-w-md mx-auto">
         <img 
           src={closetScene}
-          alt="My Closet"
+          alt="Dolabım"
           className="absolute inset-0 w-full h-full object-contain object-center pt-14 pb-20"
           draggable={false}
         />
@@ -69,7 +69,7 @@ const Closet = () => {
                       ? 'bg-amber-200/50' 
                       : 'hover:bg-amber-100/30 active:bg-amber-200/40'
                   }`}
-                  aria-label={`Open ${category}`}
+                  aria-label={`${category} kategorisini aç`}
                 />
               );
             })}

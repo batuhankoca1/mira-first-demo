@@ -29,11 +29,11 @@ export interface Outfit {
 
 // All categories with labels and icons
 export const CATEGORIES: { value: ClothingCategory; label: string; icon: string }[] = [
-  { value: 'tops', label: 'Tops', icon: '👕' },
-  { value: 'bottoms', label: 'Bottoms', icon: '👖' },
-  { value: 'bags', label: 'Bags', icon: '👜' },
-  { value: 'shoes', label: 'Shoes', icon: '👟' },
-  { value: 'jackets', label: 'Jackets', icon: '🧥' },
-  { value: 'dresses', label: 'Dresses', icon: '👗' },
-  { value: 'accessories', label: 'Accessories', icon: '💍' },
+  { value: 'tops', label: 'Üstler', icon: '👕' },
+  { value: 'bottoms', label: 'Altlar', icon: '👖' },
+  { value: 'bags', label: 'Çantalar', icon: '👜' },
+  { value: 'shoes', label: 'Ayakkabılar', icon: '👟' },
+  { value: 'jackets', label: 'Ceketler', icon: '🧥' },
+  { value: 'dresses', label: 'Elbiseler', icon: '👗' },
+  { value: 'accessories', label: 'Aksesuarlar', icon: '💍' },
 ];

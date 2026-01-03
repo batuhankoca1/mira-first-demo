@@ -3,10 +3,10 @@ import { cn } from '@/lib/utils';
 import { Shirt, Sparkles, Compass, User } from 'lucide-react';
 
 const navItems = [
-  { path: '/closet', label: 'Closet', icon: Shirt },
-  { path: '/dressup', label: 'Builder', icon: Sparkles },
-  { path: '/explore', label: 'Explore', icon: Compass },
-  { path: '/profile', label: 'Profile', icon: User },
+  { path: '/closet', label: 'Dolap', icon: Shirt },
+  { path: '/dressup', label: 'Kombin', icon: Sparkles },
+  { path: '/explore', label: 'Keşfet', icon: Compass },
+  { path: '/profile', label: 'Profil', icon: User },
 ];
 
 export function BottomNav() {
