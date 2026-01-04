@@ -13,10 +13,10 @@ import bgBeach from '@/assets/bg-beach.jpg';
 const STORAGE_KEY = 'dressup-outfit';
 const FIRST_VISIT_KEY = 'dressup-first-visit';
 
-// Default outfit for first visit: white crop top (index 1) + black pleated skirt (index 1)
+// Default outfit for first visit: white crop top (index 1) + short black skirt
 const DEFAULT_OUTFIT: OutfitState = {
   tops: 1,    // white-crop-top
-  bottoms: 1, // black-pleated-skirt
+  bottoms: 8, // leather-skirt (short black)
 };
 
 interface OutfitState {
@@ -186,7 +186,7 @@ const DressUp = () => {
       <AppHeader />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pt-20 pb-28">
+      <div className="flex-1 min-h-0 overflow-y-auto pt-20 pb-28 [-webkit-overflow-scrolling:touch]">
         <div className="max-w-md mx-auto px-4 py-4 flex flex-col h-full">
           {/* Environment Buttons */}
           <div className="flex justify-center gap-3 mb-4">
