@@ -61,10 +61,10 @@ const Closet = () => {
                 <button
                   key={category}
                   onClick={() => handleZoneTap(category)}
-                  className={`absolute ${zone} transition-all duration-75 rounded-xl ${
+                  className={`absolute ${zone} transition-all duration-75 rounded-xl border-2 border-dashed ${
                     isTapped 
-                      ? 'bg-amber-300/30' 
-                      : 'hover:bg-amber-100/20 active:bg-amber-200/30'
+                      ? 'bg-amber-300/30 border-amber-500' 
+                      : 'border-transparent hover:border-amber-400 hover:bg-amber-100/20 active:bg-amber-200/30'
                   }`}
                   aria-label={`${category} kategorisini aç`}
                 />
