@@ -282,19 +282,13 @@ const DressUp = () => {
                     <button
                       key={item.id}
                       onClick={() => selectItem(idx)}
-                      className={`relative flex-shrink-0 w-14 h-14 rounded-lg border-2 transition-all overflow-hidden snap-center ${
+                      className={`relative flex-shrink-0 w-14 h-14 rounded-lg border-2 transition-all overflow-hidden snap-center bg-white ${
                         currentIndex === idx
                           ? item.isSponsored
                             ? 'border-amber-500 shadow-md ring-2 ring-amber-400/50'
                             : 'border-amber-600 shadow-md'
-                          : 'border-amber-200 bg-white hover:border-amber-400'
+                          : 'border-amber-200 hover:border-amber-400'
                       }`}
-                      style={{
-                        backgroundImage:
-                          'linear-gradient(45deg, #f0ebe3 25%, transparent 25%), linear-gradient(-45deg, #f0ebe3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0ebe3 75%), linear-gradient(-45deg, transparent 75%, #f0ebe3 75%)',
-                        backgroundSize: '8px 8px',
-                        backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
-                      }}
                     >
                       <img
                         src={item.src}
@@ -322,17 +316,11 @@ const DressUp = () => {
               </button>
             </div>
 
-            {/* Current Selection Label + Lock Button */}
-            <div className="mt-2 flex items-center justify-center gap-2">
-              <div className="text-xs text-amber-800/70">
-                {categoryInfo?.icon} {categoryInfo?.label}:{' '}
-                <span className="font-medium text-amber-900">
-                  {currentIndex !== null ? `Parça ${currentIndex + 1}` : 'Yok'}
-                </span>
-              </div>
+            {/* Lock Button - Centered */}
+            <div className="mt-2 flex justify-center">
               <button
                 onClick={toggleLock}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   locked[activeCategory]
                     ? 'bg-amber-600 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -340,12 +328,12 @@ const DressUp = () => {
               >
                 {locked[activeCategory] ? (
                   <>
-                    <Lock className="w-2.5 h-2.5" />
+                    <Lock className="w-3 h-3" />
                     Kilitli
                   </>
                 ) : (
                   <>
-                    <LockOpen className="w-2.5 h-2.5" />
+                    <LockOpen className="w-3 h-3" />
                     Kilitle
                   </>
                 )}
