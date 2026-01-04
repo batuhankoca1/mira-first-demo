@@ -11,13 +11,6 @@ import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
 
 const STORAGE_KEY = 'dressup-outfit';
-const FIRST_VISIT_KEY = 'dressup-first-visit';
-
-// Default outfit for first visit: white crop top (index 1) + short black skirt
-const DEFAULT_OUTFIT: OutfitState = {
-  tops: 1,    // white-crop-top
-  bottoms: 8, // leather-skirt (short black)
-};
 
 interface OutfitState {
   tops: number | null;
@@ -51,25 +44,16 @@ const DressUp = () => {
   const [isTuckedIn, setIsTuckedIn] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
 
-  // Load outfit from localStorage (or set default on first visit)
+  // Load outfit from localStorage
   useEffect(() => {
     try {
-      const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
       const saved = localStorage.getItem(STORAGE_KEY);
-
-      // If user came from Explore/Stylist, don't override their pre-selected outfit.
       if (saved) {
         const parsed = JSON.parse(saved);
         setOutfit({
           tops: parsed.tops ?? null,
           bottoms: parsed.bottoms ?? null,
         });
-        return;
-      }
-
-      if (isFirstVisit) {
-        setOutfit(DEFAULT_OUTFIT);
-        localStorage.setItem(FIRST_VISIT_KEY, 'true');
       }
     } catch {
       // Ignore parse errors
@@ -185,12 +169,13 @@ const DressUp = () => {
   const currentEnv = ENVIRONMENTS.find((e) => e.id === environment);
 
   return (
-    <div className="min-h-[100dvh] bg-[#fdf6ed] flex flex-col">
+    <div className="fixed inset-0 bg-[#fdf6ed] flex flex-col">
       <AppHeader />
 
       {/* Content */}
-      <main className="flex-1 pt-20 pb-28">
+      <div className="flex-1 overflow-y-auto pt-20 pb-28">
         <div className="max-w-md mx-auto px-4 py-4 flex flex-col h-full">
+          {/* Environment Buttons */}
           <div className="flex justify-center gap-3 mb-4">
             {ENVIRONMENTS.map((env) => (
               <button
@@ -236,21 +221,18 @@ const DressUp = () => {
           </div>
 
           {/* Category Selector with Lock */}
-          <div className="mb-2 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-1.5 items-center w-max min-w-full px-1">
-              {CATEGORIES.map(({ value, icon }) => {
+          <div className="mb-2">
+            <div className="flex gap-1.5 justify-center items-center">
+              {CATEGORIES.map(({ value, label, icon }) => {
                 const isActive = activeCategory === value;
                 const hasItem = outfit[value] !== null;
                 const isLocked = locked[value];
-                
-                // Custom labels for tops and bottoms
-                const label = value === 'tops' ? 'Üst Giyim' : value === 'bottoms' ? 'Alt Giyim' : CATEGORIES.find(c => c.value === value)?.label;
 
                 return (
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`relative px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                    className={`relative px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
@@ -385,7 +367,7 @@ const DressUp = () => {
             </button>
           </div>
         </div>
-      </main>
+      </div>
 
       <BottomNav />
     </div>
