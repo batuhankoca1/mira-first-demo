@@ -11,6 +11,13 @@ import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
 
 const STORAGE_KEY = 'dressup-outfit';
+const FIRST_VISIT_KEY = 'dressup-first-visit';
+
+// Default outfit for first visit: white crop top (index 1) + black pleated skirt (index 1)
+const DEFAULT_OUTFIT: OutfitState = {
+  tops: 1,    // white-crop-top
+  bottoms: 1, // black-pleated-skirt
+};
 
 interface OutfitState {
   tops: number | null;
@@ -44,11 +51,17 @@ const DressUp = () => {
   const [isTuckedIn, setIsTuckedIn] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
 
-  // Load outfit from localStorage
+  // Load outfit from localStorage (or set default on first visit)
   useEffect(() => {
     try {
+      const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      
+      if (isFirstVisit) {
+        // First visit: set default outfit and mark as visited
+        setOutfit(DEFAULT_OUTFIT);
+        localStorage.setItem(FIRST_VISIT_KEY, 'true');
+      } else if (saved) {
         const parsed = JSON.parse(saved);
         setOutfit({
           tops: parsed.tops ?? null,
