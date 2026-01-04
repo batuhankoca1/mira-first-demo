@@ -11,19 +11,19 @@ const CATEGORY_ZONES: {
   zone: string;
 }[] = [
   // Top left - Üst Giyim (sweater card)
-  { category: 'tops', zone: 'top-[0%] left-[3%] w-[44%] h-[24%]' },
+  { category: 'tops', zone: 'top-[4%] left-[6%] w-[38%] h-[22%]' },
   // Top right - Alt Giyim (skirt card)
-  { category: 'bottoms', zone: 'top-[0%] left-[53%] w-[44%] h-[24%]' },
+  { category: 'bottoms', zone: 'top-[4%] left-[56%] w-[38%] h-[22%]' },
   // Middle left - Ceket (trench coat card)
-  { category: 'jackets', zone: 'top-[25%] left-[3%] w-[28%] h-[32%]' },
+  { category: 'jackets', zone: 'top-[27%] left-[6%] w-[26%] h-[26%]' },
   // Middle right - Elbise (dress card)
-  { category: 'dresses', zone: 'top-[25%] left-[69%] w-[28%] h-[32%]' },
+  { category: 'dresses', zone: 'top-[27%] left-[68%] w-[26%] h-[26%]' },
   // Bottom left - Ayakkabı (shoes)
-  { category: 'shoes', zone: 'top-[58%] left-[3%] w-[28%] h-[24%]' },
+  { category: 'shoes', zone: 'top-[54%] left-[6%] w-[22%] h-[22%]' },
   // Bottom center - Çanta (bags)
-  { category: 'bags', zone: 'top-[58%] left-[36%] w-[28%] h-[24%]' },
+  { category: 'bags', zone: 'top-[54%] left-[39%] w-[22%] h-[22%]' },
   // Bottom right - Aksesuar (necklace)
-  { category: 'accessories', zone: 'top-[58%] left-[69%] w-[28%] h-[24%]' },
+  { category: 'accessories', zone: 'top-[54%] left-[72%] w-[22%] h-[22%]' },
 ];
 
 const Closet = () => {
