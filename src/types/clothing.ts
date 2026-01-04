@@ -1,11 +1,11 @@
 // Active clothing categories
-export type ClothingCategory = 'tops' | 'bottoms';
+export type ClothingCategory = 'tops' | 'bottoms' | 'jackets' | 'dresses' | 'shoes' | 'bags' | 'accessories';
 
 // Anchor types for avatar positioning
 export type AnchorType = 'chest' | 'waist';
 
 // Default anchor configs per category
-export const CATEGORY_ANCHORS: Record<ClothingCategory, { 
+export const CATEGORY_ANCHORS: Record<'tops' | 'bottoms', { 
   anchorType: AnchorType; 
   anchorOffset: { x: number; y: number }; 
   scale: number 
@@ -36,4 +36,9 @@ export interface Outfit {
 export const CATEGORIES: { value: ClothingCategory; label: string; icon: string }[] = [
   { value: 'tops', label: 'Üstler', icon: '👕' },
   { value: 'bottoms', label: 'Altlar', icon: '👖' },
+  { value: 'jackets', label: 'Ceketler', icon: '🧥' },
+  { value: 'dresses', label: 'Elbiseler', icon: '👗' },
+  { value: 'shoes', label: 'Ayakkabılar', icon: '👟' },
+  { value: 'bags', label: 'Çantalar', icon: '👜' },
+  { value: 'accessories', label: 'Aksesuarlar', icon: '💍' },
 ];

@@ -19,7 +19,7 @@ interface LayerConfig {
   scaleY?: number;
 }
 
-const DEFAULT_LAYER_CONFIG: Record<ClothingCategory, LayerConfig> = {
+const DEFAULT_LAYER_CONFIG: Record<'tops' | 'bottoms', LayerConfig> = {
   tops: {
     top: '14%',
     left: '16%',
@@ -38,7 +38,7 @@ const DEFAULT_LAYER_CONFIG: Record<ClothingCategory, LayerConfig> = {
 
 // Compute final layer config by merging defaults with per-item adjustments
 function getLayerConfig(
-  category: ClothingCategory,
+  category: 'tops' | 'bottoms',
   item: WardrobeItem,
   isTuckedIn: boolean
 ): LayerConfig {
@@ -62,7 +62,7 @@ function getLayerConfig(
 }
 
 // Render order (z-index: bottom to top by default)
-const RENDER_ORDER: ClothingCategory[] = ['bottoms', 'tops'];
+const RENDER_ORDER: ('tops' | 'bottoms')[] = ['bottoms', 'tops'];
 
 export function AvatarContainer({ selectedItems, className = '', isTuckedIn = false }: AvatarContainerProps) {
   return (
