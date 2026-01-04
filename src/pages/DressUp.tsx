@@ -187,7 +187,7 @@ const DressUp = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto pt-20 pb-28">
-        <div className="max-w-md mx-auto px-4 py-4 flex flex-col gap-2">
+        <div className="max-w-md mx-auto px-4 py-4 flex flex-col h-full">
           {/* Environment Buttons */}
           <div className="flex justify-center gap-3 mb-4">
             {ENVIRONMENTS.map((env) => (
@@ -217,7 +217,7 @@ const DressUp = () => {
 
           {/* Avatar with environment background */}
           <div
-            className="h-[50vh] max-h-[420px] min-h-[280px] mb-2 rounded-2xl overflow-hidden transition-all duration-500 relative"
+            className="flex-1 min-h-[380px] mb-2 rounded-2xl overflow-hidden transition-all duration-500 relative"
             style={{
               backgroundImage: `url(${currentEnv?.bg})`,
               backgroundSize: 'cover',
