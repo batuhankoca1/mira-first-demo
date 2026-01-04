@@ -234,8 +234,8 @@ const DressUp = () => {
           </div>
 
           {/* Category Selector with Lock */}
-          <div className="mb-2">
-            <div className="flex gap-1.5 justify-center items-center">
+          <div className="mb-2 -mx-4 px-4">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory touch-pan-x pb-1">
               {CATEGORIES.map(({ value, label, icon }) => {
                 const isActive = activeCategory === value;
                 const hasItem = outfit[value] !== null;
@@ -245,7 +245,7 @@ const DressUp = () => {
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`relative px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    className={`relative flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap snap-center ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
