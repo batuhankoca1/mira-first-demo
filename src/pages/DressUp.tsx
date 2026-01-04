@@ -222,20 +222,20 @@ const DressUp = () => {
 
           {/* Category Selector with Lock */}
           <div className="mb-2 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 justify-start items-center w-max min-w-full px-1">
-              {[
-                { value: 'tops' as ClothingCategory, label: 'Üst Giyim', icon: '👕' },
-                { value: 'bottoms' as ClothingCategory, label: 'Alt Giyim', icon: '👖' },
-              ].map(({ value, label, icon }) => {
+            <div className="flex gap-1.5 items-center w-max min-w-full px-1">
+              {CATEGORIES.map(({ value, icon }) => {
                 const isActive = activeCategory === value;
                 const hasItem = outfit[value] !== null;
                 const isLocked = locked[value];
+                
+                // Custom labels for tops and bottoms
+                const label = value === 'tops' ? 'Üst Giyim' : value === 'bottoms' ? 'Alt Giyim' : CATEGORIES.find(c => c.value === value)?.label;
 
                 return (
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`relative px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                    className={`relative px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
