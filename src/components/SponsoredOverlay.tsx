@@ -11,7 +11,7 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
 
   return (
     <div className="absolute inset-0 pointer-events-none z-50">
-      {/* Sponsored Badge - Top Left, below environment buttons */}
+      {/* Mira Öneriyor Badge - Top Left */}
       <div 
         className={`absolute top-3 left-3 transition-all duration-300 ${
           isVisible 
@@ -19,9 +19,9 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
             : 'opacity-0 -translate-y-2'
         }`}
       >
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-medium shadow-md">
-          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          Sponsorlu
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-400 via-amber-400 to-amber-500 text-white text-[10px] font-semibold shadow-lg backdrop-blur-sm">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Mira Öneriyor
         </span>
       </div>
 

@@ -5,7 +5,7 @@ import { AvatarContainer } from '@/components/AvatarContainer';
 import { SponsoredOverlay } from '@/components/SponsoredOverlay';
 import { WardrobeItem, getItemsByCategory, CATEGORY_ORDER, SponsoredInfo } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
-import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle, Briefcase, Coffee, Umbrella, Lock, LockOpen, Sparkles, Layers, Wand2 } from 'lucide-react';
 import bgOffice from '@/assets/bg-office.jpg';
 import bgCoffee from '@/assets/bg-coffee.jpg';
 import bgBeach from '@/assets/bg-beach.jpg';
@@ -42,6 +42,7 @@ const DressUp = () => {
     bottoms: false,
   });
   const [isTuckedIn, setIsTuckedIn] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
 
   // Load outfit from localStorage
   useEffect(() => {
@@ -113,20 +114,25 @@ const DressUp = () => {
 
   // Shuffle only unlocked categories
   const shuffle = useCallback(() => {
-    setOutfit((prev) => {
-      const newOutfit: OutfitState = { ...prev };
+    setIsShuffling(true);
+    
+    setTimeout(() => {
+      setOutfit((prev) => {
+        const newOutfit: OutfitState = { ...prev };
 
-      CATEGORY_ORDER.forEach((cat) => {
-        if (locked[cat]) return;
+        CATEGORY_ORDER.forEach((cat) => {
+          if (locked[cat]) return;
 
-        const items = getItemsByCategory(cat);
-        if (items.length > 0) {
-          newOutfit[cat] = Math.floor(Math.random() * items.length);
-        }
+          const items = getItemsByCategory(cat);
+          if (items.length > 0) {
+            newOutfit[cat] = Math.floor(Math.random() * items.length);
+          }
+        });
+
+        return newOutfit;
       });
-
-      return newOutfit;
-    });
+      setIsShuffling(false);
+    }, 500);
   }, [locked]);
 
   // Build selected items map for AvatarContainer
@@ -365,10 +371,11 @@ const DressUp = () => {
             {/* Shuffle Button */}
             <button
               onClick={shuffle}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg"
+              disabled={isShuffling}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors shadow-lg disabled:opacity-70"
             >
-              <Shuffle className="w-4 h-4" />
-              Karıştır
+              <Wand2 className={`w-4 h-4 transition-transform duration-500 ${isShuffling ? 'animate-spin' : ''}`} />
+              Bana Kombin Yap
             </button>
           </div>
         </div>
