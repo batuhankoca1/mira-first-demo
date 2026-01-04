@@ -34,8 +34,8 @@ export interface Outfit {
 
 // Category display config
 export const CATEGORIES: { value: ClothingCategory; label: string; icon: string }[] = [
-  { value: 'tops', label: 'Üstler', icon: '👕' },
-  { value: 'bottoms', label: 'Altlar', icon: '👖' },
+  { value: 'tops', label: 'Üst Giyim', icon: '👕' },
+  { value: 'bottoms', label: 'Alt Giyim', icon: '👖' },
   { value: 'jackets', label: 'Ceketler', icon: '🧥' },
   { value: 'dresses', label: 'Elbiseler', icon: '👗' },
   { value: 'shoes', label: 'Ayakkabılar', icon: '👟' },
