@@ -56,17 +56,20 @@ const DressUp = () => {
     try {
       const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
       const saved = localStorage.getItem(STORAGE_KEY);
-      
-      if (isFirstVisit) {
-        // First visit: set default outfit and mark as visited
-        setOutfit(DEFAULT_OUTFIT);
-        localStorage.setItem(FIRST_VISIT_KEY, 'true');
-      } else if (saved) {
+
+      // If user came from Explore/Stylist, don't override their pre-selected outfit.
+      if (saved) {
         const parsed = JSON.parse(saved);
         setOutfit({
           tops: parsed.tops ?? null,
           bottoms: parsed.bottoms ?? null,
         });
+        return;
+      }
+
+      if (isFirstVisit) {
+        setOutfit(DEFAULT_OUTFIT);
+        localStorage.setItem(FIRST_VISIT_KEY, 'true');
       }
     } catch {
       // Ignore parse errors
@@ -182,13 +185,12 @@ const DressUp = () => {
   const currentEnv = ENVIRONMENTS.find((e) => e.id === environment);
 
   return (
-    <div className="fixed inset-0 bg-[#fdf6ed] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#fdf6ed] flex flex-col">
       <AppHeader />
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto pt-20 pb-28 [-webkit-overflow-scrolling:touch]">
+      <main className="flex-1 pt-20 pb-28">
         <div className="max-w-md mx-auto px-4 py-4 flex flex-col h-full">
-          {/* Environment Buttons */}
           <div className="flex justify-center gap-3 mb-4">
             {ENVIRONMENTS.map((env) => (
               <button
@@ -383,7 +385,7 @@ const DressUp = () => {
             </button>
           </div>
         </div>
-      </div>
+      </main>
 
       <BottomNav />
     </div>
