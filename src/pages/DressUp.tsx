@@ -282,7 +282,7 @@ const DressUp = () => {
                     <button
                       key={item.id}
                       onClick={() => selectItem(idx)}
-                      className={`relative flex-shrink-0 w-14 h-14 rounded-lg border-2 transition-all overflow-hidden snap-center bg-white ${
+                      className={`relative flex-shrink-0 w-14 h-14 rounded-lg border-2 transition-all overflow-hidden snap-center ${
                         currentIndex === idx
                           ? item.isSponsored
                             ? 'border-amber-500 shadow-md ring-2 ring-amber-400/50'
