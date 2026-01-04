@@ -221,9 +221,12 @@ const DressUp = () => {
           </div>
 
           {/* Category Selector with Lock */}
-          <div className="mb-2">
-            <div className="flex gap-1.5 justify-center items-center">
-              {CATEGORIES.map(({ value, label, icon }) => {
+          <div className="mb-2 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 justify-start items-center w-max min-w-full px-1">
+              {[
+                { value: 'tops' as ClothingCategory, label: 'Üst Giyim', icon: '👕' },
+                { value: 'bottoms' as ClothingCategory, label: 'Alt Giyim', icon: '👖' },
+              ].map(({ value, label, icon }) => {
                 const isActive = activeCategory === value;
                 const hasItem = outfit[value] !== null;
                 const isLocked = locked[value];
@@ -232,7 +235,7 @@ const DressUp = () => {
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`relative px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`relative px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
