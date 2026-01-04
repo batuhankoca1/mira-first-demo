@@ -25,7 +25,7 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
         </span>
       </div>
 
-      {/* Top-Right Compact Info Card with CTA */}
+      {/* Top-Right Glassmorphism Info Card with CTA */}
       <div 
         className={`absolute right-3 top-3 pointer-events-auto transition-all duration-300 ${
           isVisible 
@@ -33,14 +33,14 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
             : 'opacity-0 translate-y-4'
         }`}
       >
-        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-2.5 border border-white/50 min-w-[100px]">
+        <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-xl p-3 border border-white/60 min-w-[110px]">
           {/* Brand & Fabric */}
           <p className="font-semibold text-xs text-foreground">{sponsoredInfo.brand}</p>
           <p className="text-[10px] text-muted-foreground">{sponsoredInfo.fabric}</p>
           
           {/* Price & Rating Row */}
-          <div className="flex items-center justify-between mt-1.5 gap-2">
-            <span className="font-bold text-sm text-foreground">{sponsoredInfo.price}</span>
+          <div className="flex items-center justify-between mt-2 gap-2">
+            <span className="font-extrabold text-base text-foreground tracking-tight">{sponsoredInfo.price}</span>
             <div className="flex items-center gap-0.5">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
               <span className="text-[10px] font-medium text-amber-700">{sponsoredInfo.rating}</span>
@@ -48,8 +48,8 @@ export const SponsoredOverlay = ({ isVisible, sponsoredInfo }: SponsoredOverlayP
           </div>
           
           {/* CTA Button */}
-          <a href={sponsoredInfo.buyLink} className="block mt-2">
-            <button className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-foreground text-background font-medium text-[10px] shadow hover:scale-105 transition-transform active:scale-95">
+          <a href={sponsoredInfo.buyLink} className="block mt-2.5">
+            <button className="w-full flex items-center justify-center gap-1 px-3 py-2 rounded-full bg-foreground/90 text-background font-semibold text-[11px] shadow-lg hover:scale-105 transition-transform active:scale-95">
               <span>SATIN AL</span>
               <ExternalLink className="w-3 h-3" />
             </button>

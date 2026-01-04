@@ -92,6 +92,13 @@ function simulateAIResponse(userText: string): { text: string; outfit?: { top: W
   };
 }
 
+const QUICK_CHIPS = [
+  { emoji: '📅', label: 'Date Night' },
+  { emoji: '💼', label: 'Ofis Şıklığı' },
+  { emoji: '☕', label: 'Kahve Molası' },
+  { emoji: '☀️', label: 'Haftasonu Rahatlığı' },
+];
+
 export default function AIStylist() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
@@ -105,18 +112,21 @@ export default function AIStylist() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Check if only welcome message exists (no user messages yet)
+  const showQuickChips = messages.length === 1 && messages[0].id === 'welcome';
+
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!inputValue.trim() || isTyping) return;
+  const sendMessage = (text: string) => {
+    if (!text.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
-      text: inputValue.trim()
+      text: text.trim()
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -136,6 +146,14 @@ export default function AIStylist() {
       setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
     }, 1500);
+  };
+
+  const handleSend = () => {
+    sendMessage(inputValue);
+  };
+
+  const handleQuickChip = (label: string) => {
+    sendMessage(label);
   };
 
   const handleTryOnAvatar = (outfit: { top: WardrobeItem; bottom: WardrobeItem; topIndex: number; bottomIndex: number }) => {
@@ -246,6 +264,22 @@ export default function AIStylist() {
 
         {/* Input Area */}
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md bg-card/95 backdrop-blur-lg border-t border-border/50 px-4 py-3">
+          {/* Quick Start Chips */}
+          {showQuickChips && (
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-1 scrollbar-hide">
+              {QUICK_CHIPS.map((chip) => (
+                <button
+                  key={chip.label}
+                  onClick={() => handleQuickChip(chip.label)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-muted hover:bg-accent/20 border border-border/50 text-sm font-medium text-foreground whitespace-nowrap transition-colors shrink-0"
+                >
+                  <span>{chip.emoji}</span>
+                  <span>{chip.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <Input
               value={inputValue}
