@@ -3,74 +3,124 @@ import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { AppHeader } from '@/components/AppHeader';
 import { ClothingCategory } from '@/types/clothing';
-import closetScene from '@/assets/closet-layout-new.png';
+import closetAvatar from '@/assets/closet-avatar.png';
 
-// Clickable zones covering shelf areas + labels in the illustration
-// Measured from the closet-layout-new.png image (precise alignment)
-const CATEGORY_ZONES: {
+const CATEGORY_CARDS: {
   category: ClothingCategory;
-  zone: string;
+  label: string;
+  position: 'top-left' | 'top-right' | 'mid-left' | 'mid-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
 }[] = [
-  // Top row - TOPS (left side with folded clothes + hanging rail)
-  { category: 'tops', zone: 'top-[11%] left-[4%] w-[44%] h-[20%]' },
-  // Top row - BOTTOMS (right side with jeans)
-  { category: 'bottoms', zone: 'top-[11%] left-[52%] w-[44%] h-[20%]' },
-  // Second row left - JACKETS
-  { category: 'jackets', zone: 'top-[31%] left-[4%] w-[44%] h-[15%]' },
-  // Second row right - DRESSES
-  { category: 'dresses', zone: 'top-[31%] left-[52%] w-[44%] h-[15%]' },
-  // Third row left - SHOES (upper)
-  { category: 'shoes', zone: 'top-[46%] left-[4%] w-[44%] h-[26%]' },
-  // Third row right - BAGS + BELTS ACCESSORIES
-  { category: 'bags', zone: 'top-[46%] left-[52%] w-[44%] h-[15%]' },
-  // Bottom right - ACCESSORY
-  { category: 'accessories', zone: 'top-[61%] left-[52%] w-[44%] h-[15%]' },
+  { category: 'tops', label: 'Üst Giyim', position: 'top-left' },
+  { category: 'bottoms', label: 'Alt Giyim', position: 'top-right' },
+  { category: 'jackets', label: 'Ceket', position: 'mid-left' },
+  { category: 'dresses', label: 'Elbise', position: 'mid-right' },
+  { category: 'shoes', label: 'Ayakkabı', position: 'bottom-left' },
+  { category: 'bags', label: 'Çanta', position: 'bottom-center' },
+  { category: 'accessories', label: 'Aksesuar', position: 'bottom-right' },
 ];
 
 const Closet = () => {
   const navigate = useNavigate();
-  const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
+  const [tappedCard, setTappedCard] = useState<ClothingCategory | null>(null);
 
-  const handleShelfTap = (category: ClothingCategory) => {
-    setTappedZone(category);
+  const handleCardTap = (category: ClothingCategory) => {
+    setTappedCard(category);
     setTimeout(() => {
-      setTappedZone(null);
+      setTappedCard(null);
       navigate(`/closet/${category}`);
-    }, 100);
+    }, 150);
   };
 
   return (
-    <div className="fixed inset-0 bg-[#fdf6ed]">
+    <div className="fixed inset-0 bg-[#fdf6ed] flex flex-col">
       <AppHeader />
 
-      {/* Full Scene */}
-      <div className="relative w-full h-full max-w-md mx-auto">
-        <img 
-          src={closetScene}
-          alt="Dolabım"
-          className="absolute inset-0 w-full h-full object-contain object-center pt-14 pb-20"
-          draggable={false}
-        />
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto pt-14 pb-20 px-4">
+        <div className="max-w-md mx-auto py-4">
+          {/* Grid Layout */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Top Row */}
+            {CATEGORY_CARDS.filter(c => c.position === 'top-left' || c.position === 'top-right').map(({ category, label }) => (
+              <button
+                key={category}
+                onClick={() => handleCardTap(category)}
+                className={`bg-white rounded-2xl p-4 shadow-sm transition-all duration-150 aspect-[4/3] flex flex-col items-center justify-center ${
+                  tappedCard === category ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-base font-medium text-gray-800 mb-2">{label}</span>
+                <div className="w-16 h-16 bg-gray-100 rounded-xl" />
+              </button>
+            ))}
 
-        {/* Invisible clickable zones over the shelves */}
-        <div className="absolute inset-0 pt-14 pb-20">
-          <div className="relative w-full h-full">
-            {CATEGORY_ZONES.map(({ category, zone }) => {
-              const isTapped = tappedZone === category;
-              
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleShelfTap(category)}
-                  className={`absolute ${zone} transition-all duration-75 rounded-lg ${
-                    isTapped 
-                      ? 'bg-amber-300/40' 
-                      : 'hover:bg-amber-100/20 active:bg-amber-200/30'
-                  }`}
-                  aria-label={`${category} kategorisini aç`}
+            {/* Middle Row - with Avatar */}
+            <div className="col-span-2 grid grid-cols-3 gap-3 items-center">
+              {/* Ceket */}
+              <button
+                onClick={() => handleCardTap('jackets')}
+                className={`bg-white rounded-2xl p-3 shadow-sm transition-all duration-150 aspect-[3/4] flex flex-col items-center justify-center ${
+                  tappedCard === 'jackets' ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-800 mb-2">Ceket</span>
+                <div className="w-12 h-16 bg-gray-100 rounded-lg" />
+              </button>
+
+              {/* Avatar - Center */}
+              <div className="flex items-center justify-center py-2">
+                <img
+                  src={closetAvatar}
+                  alt="Avatar"
+                  className="w-full max-w-[140px] h-auto object-contain"
+                  draggable={false}
                 />
-              );
-            })}
+              </div>
+
+              {/* Elbise */}
+              <button
+                onClick={() => handleCardTap('dresses')}
+                className={`bg-white rounded-2xl p-3 shadow-sm transition-all duration-150 aspect-[3/4] flex flex-col items-center justify-center ${
+                  tappedCard === 'dresses' ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-800 mb-2">Elbise</span>
+                <div className="w-12 h-16 bg-gray-100 rounded-lg" />
+              </button>
+            </div>
+
+            {/* Bottom Row */}
+            <div className="col-span-2 grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleCardTap('shoes')}
+                className={`bg-white rounded-2xl p-3 shadow-sm transition-all duration-150 aspect-square flex flex-col items-center justify-center ${
+                  tappedCard === 'shoes' ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-800 mb-2">Ayakkabı</span>
+                <div className="w-10 h-10 bg-gray-100 rounded-lg" />
+              </button>
+
+              <button
+                onClick={() => handleCardTap('bags')}
+                className={`bg-white rounded-2xl p-3 shadow-sm transition-all duration-150 aspect-square flex flex-col items-center justify-center ${
+                  tappedCard === 'bags' ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-800 mb-2">Çanta</span>
+                <div className="w-10 h-10 bg-gray-100 rounded-lg" />
+              </button>
+
+              <button
+                onClick={() => handleCardTap('accessories')}
+                className={`bg-white rounded-2xl p-3 shadow-sm transition-all duration-150 aspect-square flex flex-col items-center justify-center ${
+                  tappedCard === 'accessories' ? 'scale-95 bg-amber-50' : 'hover:shadow-md active:scale-95'
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-800 mb-2">Aksesuar</span>
+                <div className="w-10 h-10 bg-gray-100 rounded-lg" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
