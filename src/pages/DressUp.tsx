@@ -245,7 +245,7 @@ const DressUp = () => {
                   <button
                     key={value}
                     onClick={() => setActiveCategory(value)}
-                    className={`relative px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`relative px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                       isActive
                         ? 'bg-amber-700 text-white shadow-md'
                         : hasItem
