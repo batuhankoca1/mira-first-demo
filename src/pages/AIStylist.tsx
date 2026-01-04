@@ -22,7 +22,7 @@ interface Message {
 const DRESSUP_STORAGE_KEY = 'dressup-outfit';
 
 // Keywords for outfit matching
-const FORMAL_KEYWORDS = ['dinner', 'date', 'night', 'formal', 'party', 'evening', 'elegant', 'akşam', 'randevu', 'davet'];
+const FORMAL_KEYWORDS = ['dinner', 'date', 'night', 'formal', 'party', 'evening', 'elegant', 'akşam', 'randevu', 'davet', 'ofis', 'office', 'şıklık', 'toplantı', 'iş'];
 const CASUAL_KEYWORDS = ['casual', 'coffee', 'weekend', 'walk', 'relax', 'chill', 'kahve', 'hafta sonu', 'yürüyüş', 'rahat'];
 
 // Helper to get random item from array
