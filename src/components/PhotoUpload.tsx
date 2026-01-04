@@ -18,7 +18,7 @@ interface PhotoUploadProps {
 }
 
 // Layer positions matching Avatar (percentage-based)
-const LAYER_POSITIONS: Record<ClothingCategory, { top: string; height: string; width: string; left?: string }> = {
+const LAYER_POSITIONS: Record<'tops' | 'bottoms', { top: string; height: string; width: string; left?: string }> = {
   tops: { top: "22%", height: "28%", width: "50%" },
   bottoms: { top: "48%", height: "26%", width: "45%" },
 };
