@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { 
@@ -11,9 +12,10 @@ interface ProductCardProps {
   product: MarketplaceProduct;
   onFavorite: (id: number) => void;
   isFavorite: boolean;
+  onClick: () => void;
 }
 
-function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
+function ProductCard({ product, onFavorite, isFavorite, onClick }: ProductCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -33,7 +35,10 @@ function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30">
+    <div 
+      onClick={onClick}
+      className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 cursor-pointer active:scale-[0.98] transition-transform"
+    >
       {/* Image Carousel */}
       <div className="relative aspect-[3/4]">
         <div
@@ -107,6 +112,7 @@ function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
 }
 
 export default function Marketplace() {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
   const toggleFavorite = (id: number) => {
@@ -139,6 +145,7 @@ export default function Marketplace() {
               product={product}
               onFavorite={toggleFavorite}
               isFavorite={favorites.has(product.id)}
+              onClick={() => navigate(`/marketplace/${product.id}`)}
             />
           ))}
         </div>
