@@ -41,10 +41,11 @@ export function SellItemModal({ open, onOpenChange, item, itemDetails, onSubmit 
   const [condition, setCondition] = useState<'new' | 'like-new' | 'good'>('like-new');
   const [description, setDescription] = useState('');
 
-  // Generate a random price suggestion
+  // Generate a random price suggestion - range is ~25% of minimum
   const priceSuggestion = useMemo(() => {
-    const baseMin = Math.floor(Math.random() * 300) + 200; // 200-500
-    const baseMax = baseMin + Math.floor(Math.random() * 400) + 200; // +200-600
+    const baseMin = Math.floor(Math.random() * 600) + 300; // 300-900
+    const range = Math.floor(baseMin * 0.25); // 25% of min
+    const baseMax = baseMin + range;
     return { min: baseMin, max: baseMax };
   }, [item?.id]);
 
