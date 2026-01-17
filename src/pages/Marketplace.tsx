@@ -76,6 +76,15 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
           ))}
         </div>
 
+        {/* Featured Badge */}
+        {isFeatured && !isSold && (
+          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/40 backdrop-blur-xl rounded-full shadow-lg">
+            <span className="text-xs font-bold bg-gradient-to-r from-pink-500 to-amber-500 bg-clip-text text-transparent">
+              ✨ Editörün Seçimi
+            </span>
+          </div>
+        )}
+
         {/* Sold Overlay */}
         {isSold && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -86,7 +95,7 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
         )}
 
         {/* Seller Info - Top Left */}
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full pl-1 pr-2.5 py-1">
+        <div className={`absolute ${isFeatured ? 'bottom-2.5' : 'top-2.5'} left-2.5 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full pl-1 pr-2.5 py-1`}>
           <img
             src={getMarketplaceImagePath(product.seller.sellerpp)}
             alt={product.seller.name}
