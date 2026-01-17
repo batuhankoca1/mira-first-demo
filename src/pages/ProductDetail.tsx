@@ -121,14 +121,14 @@ export default function ProductDetail() {
     setCustomOfferAmount('');
   };
 
-  // Get Turkish product type name
+  // Get Turkish product type name with proper suffix
   const getProductTypeName = () => {
     const category = product.category.toLowerCase();
-    if (category.includes('jacket') || category.includes('ceket')) return 'ceket';
-    if (category.includes('pants') || category.includes('pantolon') || category.includes('jeans')) return 'pantolon';
-    if (category.includes('skirt') || category.includes('etek')) return 'etek';
-    if (category.includes('tshirt') || category.includes('tişört') || category.includes('top') || category.includes('blouse')) return 'tişört';
-    return 'parça';
+    if (category.includes('jacket') || category.includes('ceket')) return { name: 'ceket', suffix: 'ini' };
+    if (category.includes('pants') || category.includes('pantolon') || category.includes('jeans')) return { name: 'pantolon', suffix: 'unu' };
+    if (category.includes('skirt') || category.includes('etek')) return { name: 'etek', suffix: 'ini' };
+    if (category.includes('tshirt') || category.includes('tişört') || category.includes('top') || category.includes('blouse')) return { name: 'tişört', suffix: 'ünü' };
+    return { name: 'parça', suffix: 'nı' };
   };
 
   const handlePurchase = () => {
@@ -192,7 +192,7 @@ export default function ProductDetail() {
               <Check className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">
-              Bu {getProductTypeName()} sana çok yakışacak! 🎉
+              Bu {getProductTypeName().name} sana çok yakışacak! 🎉
             </h2>
             <p className="text-muted-foreground">Siparişiniz onaylandı ve satıcıya bildirildi.</p>
             
@@ -202,7 +202,7 @@ export default function ProductDetail() {
                 className="w-full px-6 py-3 bg-gradient-to-r from-accent to-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg"
               >
                 <Sparkles className="w-5 h-5" />
-                Yeni {getProductTypeName()}ünü kombinleyelim
+                Yeni {getProductTypeName().name}{getProductTypeName().suffix} kombinleyelim
               </button>
               <button 
                 onClick={handleContinueShopping}
