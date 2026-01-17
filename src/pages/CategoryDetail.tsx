@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, X, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Tag } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { getItemsByCategory, WardrobeItem } from '@/data/wardrobeData';
 import { ClothingCategory, CATEGORIES } from '@/types/clothing';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { SellItemModal } from '@/components/SellItemModal';
+import { useListedItems } from '@/hooks/useListedItems';
+import { toast } from 'sonner';
 
 interface ItemDetails {
   brand: string;
@@ -22,8 +26,11 @@ const getStorageKey = (itemId: string) => `item-details-${itemId}`;
 const CategoryDetail = () => {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const { isListed, listItem } = useListedItems();
+  
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSellModal, setShowSellModal] = useState(false);
   const [editedDetails, setEditedDetails] = useState<ItemDetails>({
     brand: '',
     color: '',
@@ -90,6 +97,21 @@ const CategoryDetail = () => {
     setIsEditing(false);
   };
 
+  // Handle sell button click
+  const handleSellClick = () => {
+    setShowSellModal(true);
+  };
+
+  // Handle sell submit
+  const handleSellSubmit = (data: { price: number; condition: 'new' | 'like-new' | 'good'; description?: string }) => {
+    if (selectedItem) {
+      listItem(selectedItem.id, data);
+      setShowSellModal(false);
+      setSelectedItem(null);
+      toast.success('Ürün başarıyla satışa çıktı! 🎉');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fdf6ed] pb-24">
       {/* Header */}
@@ -126,8 +148,15 @@ const CategoryDetail = () => {
               <button
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className="aspect-square rounded-2xl bg-white/60 border border-amber-200/50 overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="relative aspect-square rounded-2xl bg-white/60 border border-amber-200/50 overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
+                {/* On Sale Badge */}
+                {isListed(item.id) && (
+                  <div className="absolute top-2 right-2 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    <Tag className="w-3 h-3" />
+                    Satışta
+                  </div>
+                )}
                 <img
                   src={item.src}
                   alt={`${item.category} item`}
@@ -141,7 +170,7 @@ const CategoryDetail = () => {
       </div>
 
       {/* Item Detail Modal */}
-      <Dialog open={selectedItem !== null} onOpenChange={(open) => !open && handleClose()}>
+      <Dialog open={selectedItem !== null && !showSellModal} onOpenChange={(open) => !open && handleClose()}>
         <DialogContent className="max-w-sm mx-auto bg-[#fdf6ed] border-amber-200">
           <DialogHeader>
             <DialogTitle className="text-amber-900 font-serif flex items-center justify-between">
@@ -167,7 +196,14 @@ const CategoryDetail = () => {
           {selectedItem && (
             <div className="space-y-4">
               {/* Image Preview */}
-              <div className="aspect-square rounded-xl bg-white/60 border border-amber-200/50 overflow-hidden">
+              <div className="relative aspect-square rounded-xl bg-white/60 border border-amber-200/50 overflow-hidden">
+                {/* On Sale Badge in Modal */}
+                {isListed(selectedItem.id) && (
+                  <div className="absolute top-2 right-2 z-10 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <Tag className="w-3.5 h-3.5" />
+                    Satışta
+                  </div>
+                )}
                 <img
                   src={selectedItem.src}
                   alt="Kıyafet"
@@ -267,10 +303,38 @@ const CategoryDetail = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Sell Button */}
+              {!isListed(selectedItem.id) ? (
+                <Button
+                  onClick={handleSellClick}
+                  className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-medium"
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  Satılığa Çıkar
+                </Button>
+              ) : (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+                  <p className="text-sm text-green-700 font-medium">Bu ürün şu an satışta 🏷️</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Sell Item Modal */}
+      <SellItemModal
+        open={showSellModal}
+        onOpenChange={setShowSellModal}
+        item={selectedItem}
+        itemDetails={{
+          brand: editedDetails.brand,
+          color: editedDetails.color,
+          type: editedDetails.type,
+        }}
+        onSubmit={handleSellSubmit}
+      />
 
       <BottomNav />
     </div>
