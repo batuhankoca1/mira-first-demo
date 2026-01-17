@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Heart, Search, X } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { useFavorites } from '@/hooks/useFavorites';
 import { 
@@ -23,9 +23,10 @@ interface ProductCardProps {
   onFavorite: (id: number) => void;
   isFavorite: boolean;
   onClick: () => void;
+  isFeatured?: boolean;
 }
 
-function ProductCard({ product, onFavorite, isFavorite, onClick }: ProductCardProps) {
+function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = false }: ProductCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -44,17 +45,21 @@ function ProductCard({ product, onFavorite, isFavorite, onClick }: ProductCardPr
     }
   };
 
+  const isSold = product.sold;
+
   return (
     <div 
-      onClick={onClick}
-      className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 cursor-pointer active:scale-[0.98] transition-transform"
+      onClick={isSold ? undefined : onClick}
+      className={`bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 transition-transform ${
+        isSold ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'
+      } ${isFeatured ? 'col-span-2' : ''}`}
     >
       {/* Image Carousel */}
-      <div className="relative aspect-[3/4]">
+      <div className={`relative ${isFeatured ? 'aspect-[3/2]' : 'aspect-[3/4]'}`}>
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full touch-pan-x"
+          className={`flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full touch-pan-x ${isSold ? 'pointer-events-none' : ''}`}
           style={{ scrollBehavior: 'smooth' }}
         >
           {images.map((img, idx) => (
@@ -65,11 +70,20 @@ function ProductCard({ product, onFavorite, isFavorite, onClick }: ProductCardPr
               <img
                 src={img}
                 alt={`${product.title} - ${idx + 1}`}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${isSold ? 'opacity-50' : ''}`}
               />
             </div>
           ))}
         </div>
+
+        {/* Sold Overlay */}
+        {isSold && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="px-6 py-2 bg-white/90 text-foreground font-bold text-lg rounded-full shadow-lg">
+              SATILDI
+            </span>
+          </div>
+        )}
 
         {/* Seller Info - Top Left */}
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full pl-1 pr-2.5 py-1">
@@ -82,38 +96,46 @@ function ProductCard({ product, onFavorite, isFavorite, onClick }: ProductCardPr
         </div>
 
         {/* Favorite Button - Top Right */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onFavorite(product.id);
-          }}
-          className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full transition-all active:scale-90"
-        >
-          <Heart
-            className={`w-4.5 h-4.5 transition-colors ${
-              isFavorite ? 'fill-red-500 text-red-500' : 'text-white'
-            }`}
-          />
-        </button>
-
-        {/* Scroll Indicators */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-          {images.map((_, idx) => (
-            <div
-              key={idx}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                idx === currentIndex ? 'bg-white w-3' : 'bg-white/50'
+        {!isSold && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onFavorite(product.id);
+            }}
+            className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full transition-all active:scale-90"
+          >
+            <Heart
+              className={`w-4.5 h-4.5 transition-colors ${
+                isFavorite ? 'fill-red-500 text-red-500' : 'text-white'
               }`}
             />
-          ))}
-        </div>
+          </button>
+        )}
+
+        {/* Scroll Indicators */}
+        {!isSold && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-3' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
       <div className="p-3">
-        <h3 className="font-bold text-sm text-foreground truncate">{product.title}</h3>
+        <h3 className={`font-bold text-sm truncate ${isSold ? 'text-muted-foreground' : 'text-foreground'}`}>
+          {product.title}
+        </h3>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-base font-semibold text-accent">₺{product.price}</span>
+          <span className={`text-base font-semibold ${isSold ? 'text-muted-foreground line-through' : 'text-accent'}`}>
+            ₺{product.price}
+          </span>
           <span className="text-xs text-muted-foreground">{product.condition}</span>
         </div>
       </div>
@@ -215,13 +237,14 @@ export default function Marketplace() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onFavorite={toggleFavorite}
                 isFavorite={isFavorite(product.id)}
                 onClick={() => navigate(`/marketplace/${product.id}`)}
+                isFeatured={index === 0 && activeCategory === 'all' && !searchQuery}
               />
             ))}
           </div>

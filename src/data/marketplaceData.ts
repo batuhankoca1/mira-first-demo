@@ -15,6 +15,8 @@ export interface MarketplaceImages {
 export type ProductCondition = 'Az Kullanılmış' | 'Yeni Etiketli';
 export type ProductCategory = 'upper' | 'lower';
 
+export type SellerBadge = '⚡️ Hızlı Satıcı' | '🌟 Stil İkonu' | '💎 Premium' | '🔥 Trend' | '✨ Güvenilir';
+
 export interface MarketplaceProduct {
   id: number;
   title: string;
@@ -26,6 +28,8 @@ export interface MarketplaceProduct {
   condition: ProductCondition;
   category: ProductCategory;
   description: string;
+  sold?: boolean;
+  sellerBadge?: SellerBadge;
 }
 
 // Mock Q&A Data
@@ -70,6 +74,7 @@ export const marketplaceProducts: MarketplaceProduct[] = [
     condition: 'Az Kullanılmış',
     category: 'upper',
     description: 'Gerçek deri, fermuar detaylı biker ceket. İç astarı saten.',
+    sellerBadge: '⚡️ Hızlı Satıcı',
   },
   {
     id: 2,
@@ -112,6 +117,8 @@ export const marketplaceProducts: MarketplaceProduct[] = [
     condition: 'Az Kullanılmış',
     category: 'upper',
     description: 'Fitilli triko kumaş, bağlamalı model. Yazlık ve şık.',
+    sold: true,
+    sellerBadge: '🌟 Stil İkonu',
   },
   {
     id: 4,
@@ -154,6 +161,7 @@ export const marketplaceProducts: MarketplaceProduct[] = [
     condition: 'Az Kullanılmış',
     category: 'lower',
     description: 'Yüksek bel mom jean, açık mavi yıkamalı. %100 pamuk denim.',
+    sellerBadge: '💎 Premium',
   },
   {
     id: 6,
@@ -175,6 +183,7 @@ export const marketplaceProducts: MarketplaceProduct[] = [
     condition: 'Yeni Etiketli',
     category: 'lower',
     description: 'Geniş paça, gotik baskılı. Elastik bel, rahat kesim.',
+    sellerBadge: '✨ Güvenilir',
   },
 ];
 
@@ -189,4 +198,10 @@ export const getProductsByCategory = (category: ProductCategory): MarketplacePro
 
 export const getProductById = (id: number): MarketplaceProduct | undefined => {
   return marketplaceProducts.find((product) => product.id === id);
+};
+
+export const getRandomProducts = (excludeId: number, count: number = 2): MarketplaceProduct[] => {
+  const available = marketplaceProducts.filter(p => p.id !== excludeId && !p.sold);
+  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
 };

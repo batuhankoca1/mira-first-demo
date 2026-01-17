@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight, Send, Wallet, Check, X, Percent, MapPin } from 'lucide-react';
+import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight, Send, Wallet, Check, X, Percent, CreditCard } from 'lucide-react';
 import { 
   getProductById, 
   getMarketplaceImagePath,
+  getRandomProducts,
   mockQA,
   type ProductQA
 } from '@/data/marketplaceData';
@@ -11,6 +12,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAcceptedOffers } from '@/hooks/useAcceptedOffers';
+import { TryOnLoader } from '@/components/TryOnLoader';
 
 // Confetti component
 function Confetti({ show }: { show: boolean }) {
@@ -37,11 +40,14 @@ function Confetti({ show }: { show: boolean }) {
   );
 }
 
+const WALLET_BALANCE = 300; // TL
+
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { getAcceptedPrice, addAcceptedOffer, clearOffer } = useAcceptedOffers();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -49,6 +55,7 @@ export default function ProductDetail() {
   const [offerSheetOpen, setOfferSheetOpen] = useState(false);
   const [customOfferOpen, setCustomOfferOpen] = useState(false);
   const [customOfferAmount, setCustomOfferAmount] = useState('');
+  const [pendingOffer, setPendingOffer] = useState<number | null>(null);
   
   // Payment Dialog
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -56,11 +63,28 @@ export default function ProductDetail() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
   
+  // Try-on loader
+  const [showTryOnLoader, setShowTryOnLoader] = useState(false);
+  
   // Q&A
   const [userQuestions, setUserQuestions] = useState<{ question: string }[]>([]);
   const [questionInput, setQuestionInput] = useState('');
 
   const product = getProductById(Number(id));
+  
+  // Get accepted price for this product
+  const acceptedPrice = product ? getAcceptedPrice(product.id) : null;
+  const displayPrice = acceptedPrice ?? product?.price ?? 0;
+  
+  // Get random products for cross-sell
+  const crossSellProducts = useMemo(() => {
+    if (!product) return [];
+    return getRandomProducts(product.id, 2);
+  }, [product]);
+
+  // Check if we need hybrid payment
+  const needsHybridPayment = displayPrice > WALLET_BALANCE;
+  const cardPaymentAmount = needsHybridPayment ? displayPrice - WALLET_BALANCE : 0;
 
   if (!product) {
     return (
@@ -87,6 +111,8 @@ export default function ProductDetail() {
   };
 
   const handleTryOn = () => {
+    setShowTryOnLoader(true);
+    
     const tryOnData = {
       type: 'marketplace',
       category: product.category,
@@ -95,29 +121,74 @@ export default function ProductDetail() {
       title: product.title,
     };
     localStorage.setItem('tryon-item', JSON.stringify(tryOnData));
-    navigate('/dressup');
+    
+    // Navigate after animation
+    setTimeout(() => {
+      navigate('/dressup');
+    }, 700);
   };
 
-  const handleOfferSelect = (discountLabel: string, isCustom?: boolean) => {
+  const handleOfferSelect = (discountPercent: number, isCustom?: boolean) => {
     if (isCustom) {
       setOfferSheetOpen(false);
       setCustomOfferOpen(true);
       return;
     }
+    
+    const offerAmount = Math.round(product.price * (1 - discountPercent / 100));
+    setPendingOffer(offerAmount);
     setOfferSheetOpen(false);
+    
     toast({
-      title: "Teklif Gönderildi! 🎉",
-      description: `${discountLabel} indirim teklifiniz satıcıya iletildi.`,
+      title: "Teklifin satıcıya iletildi! 📨",
+      description: `₺${offerAmount} teklifiniz gönderildi.`,
+      duration: 4000,
     });
+    
+    // Simulate seller acceptance after 20 seconds
+    setTimeout(() => {
+      addAcceptedOffer({
+        productId: product.id,
+        acceptedPrice: offerAmount,
+        sellerName: product.seller.name,
+      });
+      
+      toast({
+        title: `${product.seller.name} teklifini kabul etti! 🚀`,
+        description: `₺${offerAmount} fiyatıyla satın alabilirsin.`,
+        duration: 4000,
+      });
+    }, 20000);
   };
 
   const handleCustomOfferSubmit = () => {
     if (!customOfferAmount.trim()) return;
+    
+    const offerAmount = parseInt(customOfferAmount);
+    setPendingOffer(offerAmount);
     setCustomOfferOpen(false);
+    
     toast({
-      title: "Teklif Gönderildi! 🎉",
-      description: `₺${customOfferAmount} teklifiniz satıcıya iletildi.`,
+      title: "Teklifin satıcıya iletildi! 📨",
+      description: `₺${offerAmount} teklifiniz gönderildi.`,
+      duration: 4000,
     });
+    
+    // Simulate seller acceptance after 20 seconds
+    setTimeout(() => {
+      addAcceptedOffer({
+        productId: product.id,
+        acceptedPrice: offerAmount,
+        sellerName: product.seller.name,
+      });
+      
+      toast({
+        title: `${product.seller.name} teklifini kabul etti! 🚀`,
+        description: `₺${offerAmount} fiyatıyla satın alabilirsin.`,
+        duration: 4000,
+      });
+    }, 20000);
+    
     setCustomOfferAmount('');
   };
 
@@ -137,6 +208,7 @@ export default function ProductDetail() {
         title: "Adres Onayı Gerekli",
         description: "Lütfen teslimat adresinizi onaylayın.",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -144,6 +216,11 @@ export default function ProductDetail() {
     setPurchaseComplete(true);
     setShowConfetti(true);
     setAddressConfirmed(false);
+    
+    // Clear the accepted offer after purchase
+    if (acceptedPrice) {
+      clearOffer(product.id);
+    }
     
     setTimeout(() => {
       setShowConfetti(false);
@@ -176,6 +253,7 @@ export default function ProductDetail() {
       toast({
         title: "Soru Gönderildi",
         description: "Satıcı en kısa sürede yanıtlayacak.",
+        duration: 4000,
       });
     }
   };
@@ -183,6 +261,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Confetti show={showConfetti} />
+      <TryOnLoader show={showTryOnLoader} />
       
       {/* Purchase Success Overlay */}
       {purchaseComplete && (
@@ -277,7 +356,17 @@ export default function ProductDetail() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-xl font-bold text-foreground">{product.title}</h1>
-              <p className="text-2xl font-bold text-accent mt-1">₺{product.price}</p>
+              <div className="flex items-center gap-2 mt-1">
+                {acceptedPrice && (
+                  <span className="text-lg text-muted-foreground line-through">₺{product.price}</span>
+                )}
+                <p className="text-2xl font-bold text-accent">₺{displayPrice}</p>
+                {acceptedPrice && (
+                  <span className="px-2 py-0.5 bg-green-500/10 text-green-600 text-xs font-medium rounded-full">
+                    Teklif Kabul Edildi
+                  </span>
+                )}
+              </div>
             </div>
             <span className="px-3 py-1 bg-accent/10 text-accent text-sm font-medium rounded-full">
               {product.condition}
@@ -307,12 +396,17 @@ export default function ProductDetail() {
               className="w-14 h-14 rounded-full object-cover border-2 border-accent/30"
             />
             <div className="flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-foreground">{product.seller.name}</h3>
                 <div className="flex items-center gap-0.5 text-amber-500">
                   <Star className="w-4 h-4 fill-current" />
                   <span className="text-sm font-medium">{product.seller.rating}</span>
                 </div>
+                {product.sellerBadge && (
+                  <span className="px-2 py-0.5 bg-accent/10 text-accent text-xs font-medium rounded-full">
+                    {product.sellerBadge}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">{product.seller.description}</p>
             </div>
@@ -388,6 +482,36 @@ export default function ProductDetail() {
             </button>
           </div>
         </div>
+
+        {/* Cross-Sell Section */}
+        {crossSellProducts.length > 0 && (
+          <div className="bg-card rounded-2xl p-4 border border-border/30">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-accent" />
+              <h3 className="font-semibold text-foreground">Bu Parçayla İyi Gider</h3>
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {crossSellProducts.map((crossProduct) => (
+                <div 
+                  key={crossProduct.id}
+                  onClick={() => navigate(`/marketplace/${crossProduct.id}`)}
+                  className="flex-shrink-0 w-32 cursor-pointer active:scale-95 transition-transform"
+                >
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden bg-muted">
+                    <img 
+                      src={getMarketplaceImagePath(crossProduct.images.asset)}
+                      alt={crossProduct.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-foreground mt-2 truncate">{crossProduct.title}</p>
+                  <p className="text-sm font-semibold text-accent">₺{crossProduct.price}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sticky Footer */}
@@ -434,7 +558,7 @@ export default function ProductDetail() {
             </p>
             
             <button
-              onClick={() => handleOfferSelect('%10')}
+              onClick={() => handleOfferSelect(10)}
               className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
             >
               <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
@@ -447,7 +571,7 @@ export default function ProductDetail() {
             </button>
             
             <button
-              onClick={() => handleOfferSelect('%20')}
+              onClick={() => handleOfferSelect(20)}
               className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
             >
               <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
@@ -460,7 +584,7 @@ export default function ProductDetail() {
             </button>
             
             <button
-              onClick={() => handleOfferSelect('Özel tutar', true)}
+              onClick={() => handleOfferSelect(0, true)}
               className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
             >
               <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
@@ -532,7 +656,7 @@ export default function ProductDetail() {
                 <p className="font-medium text-sm">{product.title}</p>
                 <p className="text-xs text-muted-foreground">{product.brand} · {product.size}</p>
               </div>
-              <p className="font-bold text-accent">₺{product.price}</p>
+              <p className="font-bold text-accent">₺{displayPrice}</p>
             </div>
 
             {/* Address Confirmation */}
@@ -562,32 +686,78 @@ export default function ProductDetail() {
             </div>
 
             {/* Payment Method */}
-            <div className="p-4 border border-accent rounded-xl bg-accent/5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-accent to-amber-600 rounded-xl flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
+            {needsHybridPayment ? (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Hibrit Ödeme</p>
+                
+                {/* Wallet Part */}
+                <div className="p-4 border border-accent rounded-xl bg-accent/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-accent to-amber-600 rounded-xl flex items-center justify-center">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">MIRA Cüzdan</p>
+                      <p className="text-sm text-muted-foreground">Kullanılacak: ₺{WALLET_BALANCE}</p>
+                    </div>
+                    <Check className="w-5 h-5 text-accent" />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold">MIRA Cüzdan</p>
-                  <p className="text-sm text-muted-foreground">Bakiye: ₺2,500</p>
+                
+                {/* Credit Card Part */}
+                <div className="p-4 border border-border rounded-xl bg-muted">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl flex items-center justify-center">
+                      <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Kredi Kartı</p>
+                      <p className="text-sm text-muted-foreground">**** **** **** 1779</p>
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">₺{cardPaymentAmount}</span>
+                  </div>
                 </div>
-                <Check className="w-5 h-5 text-accent" />
               </div>
-            </div>
+            ) : (
+              <div className="p-4 border border-accent rounded-xl bg-accent/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-accent to-amber-600 rounded-xl flex items-center justify-center">
+                    <Wallet className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold">MIRA Cüzdan</p>
+                    <p className="text-sm text-muted-foreground">Bakiye: ₺{WALLET_BALANCE}</p>
+                  </div>
+                  <Check className="w-5 h-5 text-accent" />
+                </div>
+              </div>
+            )}
 
             {/* Price Breakdown */}
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Ürün Fiyatı</span>
-                <span>₺{product.price}</span>
+                <span>₺{displayPrice}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Kargo</span>
                 <span className="text-green-600">Ücretsiz</span>
               </div>
+              {needsHybridPayment && (
+                <>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Cüzdan</span>
+                    <span>-₺{WALLET_BALANCE}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Kart ile</span>
+                    <span>₺{cardPaymentAmount}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between pt-2 border-t font-bold">
                 <span>Toplam</span>
-                <span className="text-accent">₺{product.price}</span>
+                <span className="text-accent">₺{displayPrice}</span>
               </div>
             </div>
 
