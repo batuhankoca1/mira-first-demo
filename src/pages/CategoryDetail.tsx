@@ -26,7 +26,7 @@ const getStorageKey = (itemId: string) => `item-details-${itemId}`;
 const CategoryDetail = () => {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const { isListed, listItem } = useListedItems();
+  const { isListed, listItem, unlistItem } = useListedItems();
   
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -103,12 +103,28 @@ const CategoryDetail = () => {
   };
 
   // Handle sell submit
-  const handleSellSubmit = (data: { price: number; condition: 'new' | 'like-new' | 'good'; description?: string }) => {
+  const handleSellSubmit = (data: { 
+    title: string;
+    category: ClothingCategory;
+    price: number; 
+    condition: 'new' | 'like-new' | 'good'; 
+    description?: string;
+    imageSrc?: string;
+  }) => {
     if (selectedItem) {
       listItem(selectedItem.id, data);
       setShowSellModal(false);
       setSelectedItem(null);
       toast.success('Ürün başarıyla satışa çıktı! 🎉');
+    }
+  };
+
+  // Handle unlist
+  const handleUnlist = () => {
+    if (selectedItem) {
+      unlistItem(selectedItem.id);
+      setSelectedItem(null);
+      toast.success('Ürün satıştan çekildi.');
     }
   };
 
@@ -304,7 +320,7 @@ const CategoryDetail = () => {
                 </div>
               </div>
 
-              {/* Sell Button */}
+              {/* Sell / Unlist Buttons */}
               {!isListed(selectedItem.id) ? (
                 <Button
                   onClick={handleSellClick}
@@ -314,8 +330,17 @@ const CategoryDetail = () => {
                   Satılığa Çıkar
                 </Button>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
-                  <p className="text-sm text-green-700 font-medium">Bu ürün şu an satışta 🏷️</p>
+                <div className="space-y-2">
+                  <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+                    <p className="text-sm text-green-700 font-medium">Bu ürün şu an satışta 🏷️</p>
+                  </div>
+                  <Button
+                    onClick={handleUnlist}
+                    variant="outline"
+                    className="w-full h-10 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    Satıştan Çek
+                  </Button>
                 </div>
               )}
             </div>
