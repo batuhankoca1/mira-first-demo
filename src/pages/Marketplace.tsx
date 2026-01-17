@@ -145,7 +145,7 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
           <span className={`text-base font-semibold ${isSold ? 'text-muted-foreground line-through' : 'text-accent'}`}>
             ₺{product.price}
           </span>
-          <span className="text-xs text-muted-foreground">{product.condition}</span>
+          <span className="text-[10px] text-muted-foreground">{product.condition}</span>
         </div>
       </div>
     </div>
