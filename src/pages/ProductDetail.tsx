@@ -215,18 +215,19 @@ export default function ProductDetail() {
         </div>
       )}
       
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/80 backdrop-blur-sm">
+      {/* Header - Solid white bar */}
+      <div className="sticky top-0 z-30 bg-background border-b border-border/30">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-card/80 text-foreground"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-muted text-foreground hover:bg-muted/80 transition-colors"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
+          <span className="font-medium text-foreground">Ürün Detayı</span>
           <button
             onClick={() => product && toggleFavorite(product.id)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-card/80"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
           >
             <Heart 
               className={`w-5 h-5 transition-colors ${product && isFavorite(product.id) ? 'fill-red-500 text-red-500' : 'text-foreground'}`} 
@@ -235,19 +236,19 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Image Gallery - 50% of screen */}
-      <div className="relative h-[50vh] bg-muted">
+      {/* Image Gallery - below header */}
+      <div className="relative h-[50vh] bg-gray-100">
         <div
           ref={scrollRef}
           onScroll={handleScroll}
           className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full touch-pan-x"
         >
           {galleryImages.map((img, idx) => (
-            <div key={idx} className="flex-shrink-0 w-full h-full snap-center relative">
+            <div key={idx} className="flex-shrink-0 w-full h-full snap-center relative bg-gray-100 flex items-center justify-center">
               <img
                 src={img.src}
                 alt={`${product.title} - ${img.label}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
               <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
                 <span className="text-white text-xs font-medium">{img.label}</span>
@@ -262,7 +263,7 @@ export default function ProductDetail() {
             <div
               key={idx}
               className={`h-2 rounded-full transition-all ${
-                idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 w-2'
+                idx === currentIndex ? 'bg-foreground w-6' : 'bg-foreground/30 w-2'
               }`}
             />
           ))}
