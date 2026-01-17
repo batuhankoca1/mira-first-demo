@@ -8,6 +8,7 @@ import CategoryDetail from "./pages/CategoryDetail";
 import DressUp from "./pages/DressUp";
 import AIStylist from "./pages/AIStylist";
 import Explore from "./pages/Explore";
+import Marketplace from "./pages/Marketplace";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { WardrobeProvider } from "@/hooks/useWardrobe";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/closet/:category" element={<CategoryDetail />} />
             <Route path="/dressup" element={<DressUp />} />
             <Route path="/stylist" element={<AIStylist />} />
+            <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
