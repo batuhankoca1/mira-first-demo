@@ -10,6 +10,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useFavorites } from '@/hooks/useFavorites';
 
 // Confetti component
 function Confetti({ show }: { show: boolean }) {
@@ -40,9 +41,9 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   
   // Offer Sheet
   const [offerSheetOpen, setOfferSheetOpen] = useState(false);
@@ -224,11 +225,11 @@ export default function ProductDetail() {
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={() => product && toggleFavorite(product.id)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-card/80"
           >
             <Heart 
-              className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`} 
+              className={`w-5 h-5 transition-colors ${product && isFavorite(product.id) ? 'fill-red-500 text-red-500' : 'text-foreground'}`} 
             />
           </button>
         </div>
