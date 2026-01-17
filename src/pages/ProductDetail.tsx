@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight, Send, Wallet, Check, X, Percent } from 'lucide-react';
+import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight, Send, Wallet, Check, X, Percent, MapPin } from 'lucide-react';
 import { 
   getProductById, 
   getMarketplaceImagePath,
@@ -46,9 +46,12 @@ export default function ProductDetail() {
   
   // Offer Sheet
   const [offerSheetOpen, setOfferSheetOpen] = useState(false);
+  const [customOfferOpen, setCustomOfferOpen] = useState(false);
+  const [customOfferAmount, setCustomOfferAmount] = useState('');
   
   // Payment Dialog
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
   
@@ -94,7 +97,12 @@ export default function ProductDetail() {
     navigate('/dressup');
   };
 
-  const handleOfferSelect = (discountLabel: string) => {
+  const handleOfferSelect = (discountLabel: string, isCustom?: boolean) => {
+    if (isCustom) {
+      setOfferSheetOpen(false);
+      setCustomOfferOpen(true);
+      return;
+    }
     setOfferSheetOpen(false);
     toast({
       title: "Teklif Gönderildi! 🎉",
@@ -102,14 +110,62 @@ export default function ProductDetail() {
     });
   };
 
+  const handleCustomOfferSubmit = () => {
+    if (!customOfferAmount.trim()) return;
+    setCustomOfferOpen(false);
+    toast({
+      title: "Teklif Gönderildi! 🎉",
+      description: `₺${customOfferAmount} teklifiniz satıcıya iletildi.`,
+    });
+    setCustomOfferAmount('');
+  };
+
+  // Get Turkish product type name
+  const getProductTypeName = () => {
+    const category = product.category.toLowerCase();
+    if (category.includes('jacket') || category.includes('ceket')) return 'ceket';
+    if (category.includes('pants') || category.includes('pantolon') || category.includes('jeans')) return 'pantolon';
+    if (category.includes('skirt') || category.includes('etek')) return 'etek';
+    if (category.includes('tshirt') || category.includes('tişört') || category.includes('top') || category.includes('blouse')) return 'tişört';
+    return 'parça';
+  };
+
   const handlePurchase = () => {
+    if (!addressConfirmed) {
+      toast({
+        title: "Adres Onayı Gerekli",
+        description: "Lütfen teslimat adresinizi onaylayın.",
+        variant: "destructive",
+      });
+      return;
+    }
     setPaymentDialogOpen(false);
     setPurchaseComplete(true);
     setShowConfetti(true);
+    setAddressConfirmed(false);
     
     setTimeout(() => {
       setShowConfetti(false);
     }, 3000);
+  };
+
+  const handleContinueShopping = () => {
+    setPurchaseComplete(false);
+    navigate('/marketplace');
+  };
+
+  const handleCreateOutfit = () => {
+    // Save the purchased item for try-on
+    const tryOnData = {
+      type: 'marketplace',
+      category: product.category,
+      imageUrl: getMarketplaceImagePath(product.images.asset),
+      productId: product.id,
+      title: product.title,
+    };
+    localStorage.setItem('tryon-item', JSON.stringify(tryOnData));
+    setPurchaseComplete(false);
+    navigate('/dressup');
   };
 
   const handleSendQuestion = () => {
@@ -130,21 +186,30 @@ export default function ProductDetail() {
       {/* Purchase Success Overlay */}
       {purchaseComplete && (
         <div className="fixed inset-0 z-[90] bg-background/95 flex items-center justify-center animate-fade-in">
-          <div className="text-center space-y-4 p-8">
+          <div className="text-center space-y-4 p-8 max-w-sm">
             <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center animate-scale-in">
               <Check className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground">Hayırlı Olsun! 🎉</h2>
+            <h2 className="text-2xl font-bold text-foreground">
+              Bu {getProductTypeName()} sana çok yakışacak! 🎉
+            </h2>
             <p className="text-muted-foreground">Siparişiniz onaylandı ve satıcıya bildirildi.</p>
-            <button 
-              onClick={() => {
-                setPurchaseComplete(false);
-                navigate('/marketplace');
-              }}
-              className="mt-4 px-6 py-3 bg-accent text-white rounded-xl font-medium"
-            >
-              Alışverişe Devam Et
-            </button>
+            
+            <div className="flex flex-col gap-3 mt-6">
+              <button 
+                onClick={handleCreateOutfit}
+                className="w-full px-6 py-3 bg-gradient-to-r from-accent to-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Sparkles className="w-5 h-5" />
+                Yeni {getProductTypeName()}ünü kombinleyelim
+              </button>
+              <button 
+                onClick={handleContinueShopping}
+                className="w-full px-6 py-3 border border-border text-foreground rounded-xl font-medium hover:bg-muted/50 transition-colors"
+              >
+                Alışverişe Devam Et
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -393,7 +458,7 @@ export default function ProductDetail() {
             </button>
             
             <button
-              onClick={() => handleOfferSelect('Özel tutar')}
+              onClick={() => handleOfferSelect('Özel tutar', true)}
               className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
             >
               <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
@@ -408,9 +473,47 @@ export default function ProductDetail() {
         </SheetContent>
       </Sheet>
 
-      {/* Payment Dialog */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+      {/* Custom Offer Dialog */}
+      <Dialog open={customOfferOpen} onOpenChange={setCustomOfferOpen}>
         <DialogContent className="max-w-sm mx-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center">Özel Teklif</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Ürün fiyatı: <span className="font-semibold text-foreground">₺{product.price}</span>
+            </p>
+            
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₺</span>
+              <input
+                type="number"
+                value={customOfferAmount}
+                onChange={(e) => setCustomOfferAmount(e.target.value)}
+                placeholder="Teklifinizi girin"
+                className="w-full pl-8 pr-4 py-4 bg-muted rounded-xl text-lg font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+              />
+            </div>
+            
+            <button
+              onClick={handleCustomOfferSubmit}
+              disabled={!customOfferAmount.trim()}
+              className="w-full py-4 bg-gradient-to-r from-accent to-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Tag className="w-5 h-5" />
+              Teklif Gönder
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={(open) => {
+        setPaymentDialogOpen(open);
+        if (!open) setAddressConfirmed(false);
+      }}>
+        <DialogContent className="max-w-sm mx-auto rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center">Ödeme Özeti</DialogTitle>
           </DialogHeader>
@@ -428,6 +531,32 @@ export default function ProductDetail() {
                 <p className="text-xs text-muted-foreground">{product.brand} · {product.size}</p>
               </div>
               <p className="font-bold text-accent">₺{product.price}</p>
+            </div>
+
+            {/* Address Confirmation */}
+            <div 
+              onClick={() => setAddressConfirmed(!addressConfirmed)}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                addressConfirmed 
+                  ? 'border-green-500 bg-green-500/10' 
+                  : 'border-border bg-muted hover:border-accent/50'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
+                  addressConfirmed 
+                    ? 'bg-green-500 border-green-500' 
+                    : 'border-muted-foreground'
+                }`}>
+                  {addressConfirmed && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">Teslimat Adresi</p>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Etiler mh. Bıyıklı Mehmet Paşa sk. Keskin apt. 12/3 Beşiktaş/İstanbul
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Payment Method */}
@@ -463,7 +592,11 @@ export default function ProductDetail() {
             {/* Confirm Button */}
             <button
               onClick={handlePurchase}
-              className="w-full py-4 bg-gradient-to-r from-accent to-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
+              className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
+                addressConfirmed 
+                  ? 'bg-gradient-to-r from-accent to-amber-600 text-white' 
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
             >
               <ShoppingBag className="w-5 h-5" />
               Ödemeyi Onayla
