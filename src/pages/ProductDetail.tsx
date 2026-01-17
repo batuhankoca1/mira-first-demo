@@ -155,8 +155,16 @@ export default function ProductDetail() {
       
       toast({
         title: `${product.seller.name} teklifini kabul etti! 🚀`,
-        description: `₺${offerAmount} fiyatıyla satın alabilirsin.`,
+        description: `₺${offerAmount} fiyatıyla satın almak için tıkla.`,
         duration: 4000,
+        action: (
+          <button 
+            onClick={() => navigate(`/marketplace/${product.id}`)}
+            className="px-3 py-1.5 bg-accent text-white text-xs font-medium rounded-lg hover:bg-accent/90 transition-colors"
+          >
+            Git
+          </button>
+        ),
       });
     }, 20000);
   };
@@ -184,8 +192,16 @@ export default function ProductDetail() {
       
       toast({
         title: `${product.seller.name} teklifini kabul etti! 🚀`,
-        description: `₺${offerAmount} fiyatıyla satın alabilirsin.`,
+        description: `₺${offerAmount} fiyatıyla satın almak için tıkla.`,
         duration: 4000,
+        action: (
+          <button 
+            onClick={() => navigate(`/marketplace/${product.id}`)}
+            className="px-3 py-1.5 bg-accent text-white text-xs font-medium rounded-lg hover:bg-accent/90 transition-colors"
+          >
+            Git
+          </button>
+        ),
       });
     }, 20000);
     

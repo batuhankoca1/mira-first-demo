@@ -106,8 +106,21 @@ const DressUp = () => {
   const categoryItems = getItemsByCategory(activeCategory);
   const currentIndex = outfit[activeCategory];
 
-  // Select item by index
+  // Select item by index - also clears marketplace try-on item if selecting from same category
   const selectItem = (index: number | null) => {
+    // If there's a marketplace try-on item, check if we're selecting from same category
+    if (tryOnItem) {
+      const mappedCategory: ClothingCategory = 
+        tryOnItem.category === 'lower' || tryOnItem.category === 'bottoms' 
+          ? 'bottoms' 
+          : 'tops';
+      
+      // If selecting from the same category as the try-on item, clear it
+      if (activeCategory === mappedCategory) {
+        setTryOnItem(null);
+      }
+    }
+    
     setOutfit((prev) => ({ ...prev, [activeCategory]: index }));
   };
 
