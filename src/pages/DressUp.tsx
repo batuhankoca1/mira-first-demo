@@ -188,12 +188,18 @@ const DressUp = () => {
 
     // If there's a marketplace try-on item, override the category
     if (tryOnItem) {
+      // Map marketplace categories (upper/lower) to wardrobe categories (tops/bottoms)
+      const mappedCategory: ClothingCategory = 
+        tryOnItem.category === 'lower' || tryOnItem.category === 'bottoms' 
+          ? 'bottoms' 
+          : 'tops';
+      
       const marketplaceItem: WardrobeItem = {
         id: `marketplace-${tryOnItem.productId}`,
         src: tryOnItem.imageUrl,
-        category: tryOnItem.category === 'bottoms' ? 'bottoms' : 'tops',
+        category: mappedCategory,
       };
-      result[marketplaceItem.category] = marketplaceItem;
+      result[mappedCategory] = marketplaceItem;
     }
 
     return result;
