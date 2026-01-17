@@ -48,9 +48,33 @@ const DressUp = () => {
   const [isTuckedIn, setIsTuckedIn] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
 
-  // Load outfit from localStorage
+  // Marketplace try-on item state
+  const [tryOnItem, setTryOnItem] = useState<{
+    category: string;
+    imageUrl: string;
+    productId: number;
+    title: string;
+  } | null>(null);
+
+  // Load outfit from localStorage and check for marketplace try-on item
   useEffect(() => {
     try {
+      // Check for marketplace try-on item first
+      const tryOnData = localStorage.getItem('tryon-item');
+      if (tryOnData) {
+        const parsed = JSON.parse(tryOnData);
+        if (parsed.type === 'marketplace') {
+          setTryOnItem({
+            category: parsed.category,
+            imageUrl: parsed.imageUrl,
+            productId: parsed.productId,
+            title: parsed.title,
+          });
+          // Clear the localStorage item after reading
+          localStorage.removeItem('tryon-item');
+        }
+      }
+      
       const isFirstVisit = localStorage.getItem(FIRST_VISIT_KEY) === null;
       
       if (isFirstVisit) {
@@ -161,6 +185,16 @@ const DressUp = () => {
         result[cat] = null;
       }
     });
+
+    // If there's a marketplace try-on item, override the category
+    if (tryOnItem) {
+      const marketplaceItem: WardrobeItem = {
+        id: `marketplace-${tryOnItem.productId}`,
+        src: tryOnItem.imageUrl,
+        category: tryOnItem.category === 'bottoms' ? 'bottoms' : 'tops',
+      };
+      result[marketplaceItem.category] = marketplaceItem;
+    }
 
     return result;
   };
