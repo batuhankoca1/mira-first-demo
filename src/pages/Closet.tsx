@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { AppHeader } from '@/components/AppHeader';
+import { AIStylistDrawer, AIStylistFAB } from '@/components/AIStylistDrawer';
 import { ClothingCategory } from '@/types/clothing';
 import closetScene from '@/assets/closet-avatar.png';
 
@@ -29,6 +30,7 @@ const CATEGORY_ZONES: {
 const Closet = () => {
   const navigate = useNavigate();
   const [tappedZone, setTappedZone] = useState<ClothingCategory | null>(null);
+  const [showStylist, setShowStylist] = useState(false);
 
   const handleZoneTap = (category: ClothingCategory) => {
     setTappedZone(category);
@@ -73,6 +75,12 @@ const Closet = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Stylist FAB */}
+      <AIStylistFAB onClick={() => setShowStylist(true)} />
+
+      {/* AI Stylist Drawer */}
+      <AIStylistDrawer open={showStylist} onOpenChange={setShowStylist} />
 
       <BottomNav />
     </div>
