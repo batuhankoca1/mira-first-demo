@@ -80,7 +80,7 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
         {isFeatured && !isSold && (
           <div className="absolute top-2.5 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/40 backdrop-blur-xl rounded-full shadow-lg">
             <span className="text-xs font-bold bg-gradient-to-r from-pink-500 to-amber-500 bg-clip-text text-transparent">
-              ✨ Editörün Seçimi
+              🔥 Popüler
             </span>
           </div>
         )}

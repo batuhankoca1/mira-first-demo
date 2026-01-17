@@ -96,9 +96,9 @@ export default function ProductDetail() {
 
   // Image order: proof (raw), sellerLook, asset (clean)
   const galleryImages = [
-    { src: getMarketplaceImagePath(product.images.proof), label: 'Gerçek Ürün' },
-    { src: getMarketplaceImagePath(product.images.sellerLook), label: 'Satıcıda' },
-    { src: getMarketplaceImagePath(product.images.asset), label: 'Vitrin' },
+    getMarketplaceImagePath(product.images.proof),
+    getMarketplaceImagePath(product.images.sellerLook),
+    getMarketplaceImagePath(product.images.asset),
   ];
 
   const handleScroll = () => {
@@ -322,16 +322,13 @@ export default function ProductDetail() {
           onScroll={handleScroll}
           className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full touch-pan-x"
         >
-          {galleryImages.map((img, idx) => (
+          {galleryImages.map((imgSrc, idx) => (
             <div key={idx} className="flex-shrink-0 w-full h-full snap-center relative bg-gray-100 flex items-center justify-center">
               <img
-                src={img.src}
-                alt={`${product.title} - ${img.label}`}
+                src={imgSrc}
+                alt={`${product.title} - ${idx + 1}`}
                 className="w-full h-full object-contain"
               />
-              <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-white text-xs font-medium">{img.label}</span>
-              </div>
             </div>
           ))}
         </div>
