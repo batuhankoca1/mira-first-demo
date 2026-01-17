@@ -1,18 +1,60 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Heart, Star, MessageCircle, Sparkles, ShoppingBag, Tag, ChevronRight, Send, Wallet, Check, X, Percent } from 'lucide-react';
 import { 
   getProductById, 
   getMarketplaceImagePath,
-  mockQA
+  mockQA,
+  type ProductQA
 } from '@/data/marketplaceData';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+
+// Confetti component
+function Confetti({ show }: { show: boolean }) {
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+      {[...Array(50)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute animate-[confetti_3s_ease-out_forwards]"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: '-10px',
+            animationDelay: `${Math.random() * 0.5}s`,
+            backgroundColor: ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 6)],
+            width: `${8 + Math.random() * 8}px`,
+            height: `${8 + Math.random() * 8}px`,
+            borderRadius: Math.random() > 0.5 ? '50%' : '0',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // Offer Sheet
+  const [offerSheetOpen, setOfferSheetOpen] = useState(false);
+  
+  // Payment Dialog
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [purchaseComplete, setPurchaseComplete] = useState(false);
+  
+  // Q&A
+  const [userQuestions, setUserQuestions] = useState<{ question: string }[]>([]);
+  const [questionInput, setQuestionInput] = useState('');
 
   const product = getProductById(Number(id));
 
@@ -41,7 +83,6 @@ export default function ProductDetail() {
   };
 
   const handleTryOn = () => {
-    // Save the product asset for try-on
     const tryOnData = {
       type: 'marketplace',
       category: product.category,
@@ -53,8 +94,61 @@ export default function ProductDetail() {
     navigate('/dressup');
   };
 
+  const handleOfferSelect = (discountLabel: string) => {
+    setOfferSheetOpen(false);
+    toast({
+      title: "Teklif Gönderildi! 🎉",
+      description: `${discountLabel} indirim teklifiniz satıcıya iletildi.`,
+    });
+  };
+
+  const handlePurchase = () => {
+    setPaymentDialogOpen(false);
+    setPurchaseComplete(true);
+    setShowConfetti(true);
+    
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, 3000);
+  };
+
+  const handleSendQuestion = () => {
+    if (questionInput.trim()) {
+      setUserQuestions([...userQuestions, { question: questionInput.trim() }]);
+      setQuestionInput('');
+      toast({
+        title: "Soru Gönderildi",
+        description: "Satıcı en kısa sürede yanıtlayacak.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
+      <Confetti show={showConfetti} />
+      
+      {/* Purchase Success Overlay */}
+      {purchaseComplete && (
+        <div className="fixed inset-0 z-[90] bg-background/95 flex items-center justify-center animate-fade-in">
+          <div className="text-center space-y-4 p-8">
+            <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center animate-scale-in">
+              <Check className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Hayırlı Olsun! 🎉</h2>
+            <p className="text-muted-foreground">Siparişiniz onaylandı ve satıcıya bildirildi.</p>
+            <button 
+              onClick={() => {
+                setPurchaseComplete(false);
+                navigate('/marketplace');
+              }}
+              className="mt-4 px-6 py-3 bg-accent text-white rounded-xl font-medium"
+            >
+              Alışverişe Devam Et
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-background/80 backdrop-blur-sm">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
@@ -188,11 +282,44 @@ export default function ProductDetail() {
                 </div>
               </div>
             ))}
+            
+            {/* User's Questions */}
+            {userQuestions.map((uq, idx) => (
+              <div key={`user-${idx}`} className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent flex-shrink-0">
+                    S
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{uq.question}</p>
+                    <span className="text-xs text-muted-foreground">Sen</span>
+                  </div>
+                </div>
+                <div className="ml-9 p-3 bg-muted/50 rounded-xl border-l-2 border-muted-foreground/30">
+                  <p className="text-sm text-muted-foreground italic">Satıcı yanıtı bekleniyor...</p>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <button className="w-full mt-4 py-2.5 border border-dashed border-border rounded-xl text-sm font-medium text-muted-foreground hover:border-accent hover:text-accent transition-colors">
-            + Satıcıya Soru Sor
-          </button>
+          {/* Question Input */}
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              value={questionInput}
+              onChange={(e) => setQuestionInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendQuestion()}
+              placeholder="Satıcıya soru sor..."
+              className="flex-1 px-4 py-2.5 bg-muted rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
+            />
+            <button
+              onClick={handleSendQuestion}
+              disabled={!questionInput.trim()}
+              className="w-11 h-11 flex items-center justify-center bg-accent text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -200,13 +327,19 @@ export default function ProductDetail() {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border/50">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
           {/* Teklif Ver */}
-          <button className="flex-shrink-0 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5">
+          <button 
+            onClick={() => setOfferSheetOpen(true)}
+            className="flex-shrink-0 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
+          >
             <Tag className="w-4 h-4" />
             Teklif
           </button>
 
           {/* Satın Al */}
-          <button className="flex-1 py-3 bg-foreground text-background rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity">
+          <button 
+            onClick={() => setPaymentDialogOpen(true)}
+            className="flex-1 py-3 bg-foreground text-background rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+          >
             <ShoppingBag className="w-4 h-4" />
             Satın Al
           </button>
@@ -221,6 +354,137 @@ export default function ProductDetail() {
           </button>
         </div>
       </div>
+
+      {/* Offer Action Sheet */}
+      <Sheet open={offerSheetOpen} onOpenChange={setOfferSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-center">Teklif Ver</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-3 pb-8">
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Satıcıya indirim teklifi gönderin
+            </p>
+            
+            <button
+              onClick={() => handleOfferSelect('%10')}
+              className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
+            >
+              <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                <Percent className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-medium">%10 İndirim</p>
+                <p className="text-sm text-muted-foreground">₺{Math.round(product.price * 0.9)}</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handleOfferSelect('%20')}
+              className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
+            >
+              <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
+                <Percent className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-medium">%20 İndirim</p>
+                <p className="text-sm text-muted-foreground">₺{Math.round(product.price * 0.8)}</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handleOfferSelect('Özel tutar')}
+              className="w-full p-4 bg-muted rounded-xl flex items-center gap-3 hover:bg-muted/80 transition-colors"
+            >
+              <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
+                <Tag className="w-5 h-5 text-accent" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-medium">Özel Tutar</p>
+                <p className="text-sm text-muted-foreground">Kendi fiyatınızı belirleyin</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-sm mx-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center">Ödeme Özeti</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Product Summary */}
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+              <img
+                src={getMarketplaceImagePath(product.images.asset)}
+                alt={product.title}
+                className="w-16 h-16 rounded-lg object-cover"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-sm">{product.title}</p>
+                <p className="text-xs text-muted-foreground">{product.brand} · {product.size}</p>
+              </div>
+              <p className="font-bold text-accent">₺{product.price}</p>
+            </div>
+
+            {/* Payment Method */}
+            <div className="p-4 border border-accent rounded-xl bg-accent/5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-accent to-amber-600 rounded-xl flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">MIRA Cüzdan</p>
+                  <p className="text-sm text-muted-foreground">Bakiye: ₺2,500</p>
+                </div>
+                <Check className="w-5 h-5 text-accent" />
+              </div>
+            </div>
+
+            {/* Price Breakdown */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ürün Fiyatı</span>
+                <span>₺{product.price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kargo</span>
+                <span className="text-green-600">Ücretsiz</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t font-bold">
+                <span>Toplam</span>
+                <span className="text-accent">₺{product.price}</span>
+              </div>
+            </div>
+
+            {/* Confirm Button */}
+            <button
+              onClick={handlePurchase}
+              className="w-full py-4 bg-gradient-to-r from-accent to-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Ödemeyi Onayla
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confetti Animation Style */}
+      <style>{`
+        @keyframes confetti {
+          0% {
+            transform: translateY(0) rotateZ(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotateZ(720deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
