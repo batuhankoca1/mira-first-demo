@@ -365,7 +365,13 @@ export default function ProductDetail() {
                 )}
               </div>
             </div>
-            <span className="px-3 py-1 bg-accent/10 text-accent text-sm font-medium rounded-full">
+            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+              product.condition === 'Yeni Etiketli' 
+                ? 'bg-green-500/15 text-green-600' 
+                : product.condition === 'Az Kullanılmış'
+                  ? 'bg-blue-500/15 text-blue-600'
+                  : 'bg-gray-500/15 text-gray-500'
+            }`}>
               {product.condition}
             </span>
           </div>
