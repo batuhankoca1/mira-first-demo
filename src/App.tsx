@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { WardrobeProvider } from "@/hooks/useWardrobe";
 import { ListedItemsProvider } from "@/hooks/useListedItems";
+import { AcceptedOffersProvider } from "@/hooks/useAcceptedOffers";
 
 const queryClient = new QueryClient();
 
@@ -26,19 +27,21 @@ const App = () => (
       <BrowserRouter>
         <WardrobeProvider>
           <ListedItemsProvider>
-            <Routes>
-              <Route path="/" element={<Navigate to="/closet" replace />} />
-              <Route path="/closet" element={<Closet />} />
-              <Route path="/closet/:category" element={<CategoryDetail />} />
-              <Route path="/dressup" element={<DressUp />} />
-              <Route path="/stylist" element={<AIStylist />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/marketplace/:id" element={<ProductDetail />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AcceptedOffersProvider>
+              <Routes>
+                <Route path="/" element={<Navigate to="/closet" replace />} />
+                <Route path="/closet" element={<Closet />} />
+                <Route path="/closet/:category" element={<CategoryDetail />} />
+                <Route path="/dressup" element={<DressUp />} />
+                <Route path="/stylist" element={<AIStylist />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/marketplace/:id" element={<ProductDetail />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AcceptedOffersProvider>
           </ListedItemsProvider>
         </WardrobeProvider>
       </BrowserRouter>
