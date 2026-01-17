@@ -141,11 +141,19 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
         <h3 className={`font-bold text-sm truncate ${isSold ? 'text-muted-foreground' : 'text-foreground'}`}>
           {product.title}
         </h3>
-        <div className="flex items-center justify-between mt-1">
-          <span className={`text-base font-semibold ${isSold ? 'text-muted-foreground line-through' : 'text-accent'}`}>
+        <div className="flex items-center justify-between mt-1 gap-1">
+          <span className={`text-base font-semibold flex-shrink-0 ${isSold ? 'text-muted-foreground line-through' : 'text-accent'}`}>
             ₺{product.price}
           </span>
-          <span className="text-[10px] text-muted-foreground">{product.condition}</span>
+          <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full truncate ${
+            product.condition === 'Yeni Etiketli' 
+              ? 'bg-green-500/15 text-green-600' 
+              : product.condition === 'Az Kullanılmış'
+                ? 'bg-blue-500/15 text-blue-600'
+                : 'bg-gray-500/15 text-gray-500'
+          }`}>
+            {product.condition}
+          </span>
         </div>
       </div>
     </div>
