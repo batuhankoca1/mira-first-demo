@@ -145,7 +145,7 @@ function ProductCard({ product, onFavorite, isFavorite, onClick, isFeatured = fa
           <span className={`text-base font-semibold flex-shrink-0 ${isSold ? 'text-muted-foreground line-through' : 'text-accent'}`}>
             ₺{product.price}
           </span>
-          <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full truncate ${
+          <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full truncate ${
             product.condition === 'Yeni Etiketli' 
               ? 'bg-green-500/15 text-green-600' 
               : product.condition === 'Az Kullanılmış'
