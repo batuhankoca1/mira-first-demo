@@ -10,6 +10,7 @@ import AIStylist from "./pages/AIStylist";
 import Explore from "./pages/Explore";
 import Marketplace from "./pages/Marketplace";
 import ProductDetail from "./pages/ProductDetail";
+import Favorites from "./pages/Favorites";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { WardrobeProvider } from "@/hooks/useWardrobe";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/stylist" element={<AIStylist />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/marketplace/:id" element={<ProductDetail />} />
+            <Route path="/favorites" element={<Favorites />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
