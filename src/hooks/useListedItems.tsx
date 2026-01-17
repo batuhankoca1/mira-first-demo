@@ -1,11 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { ClothingCategory } from '@/types/clothing';
 
 export interface ListedItem {
   itemId: string;
+  title: string;
+  category: ClothingCategory;
   price: number;
   condition: 'new' | 'like-new' | 'good';
   description?: string;
   listedAt: Date;
+  imageSrc?: string; // Store image for profile display
 }
 
 interface ListedItemsContextValue {
@@ -14,6 +18,7 @@ interface ListedItemsContextValue {
   listItem: (itemId: string, data: Omit<ListedItem, 'itemId' | 'listedAt'>) => void;
   unlistItem: (itemId: string) => void;
   getListingInfo: (itemId: string) => ListedItem | null;
+  getAllListedItems: () => ListedItem[];
 }
 
 const STORAGE_KEY = 'mira-listed-items';
@@ -86,13 +91,18 @@ export function ListedItemsProvider({ children }: { children: ReactNode }) {
     return listedItems[itemId] || null;
   }, [listedItems]);
 
+  const getAllListedItems = useCallback((): ListedItem[] => {
+    return Object.values(listedItems);
+  }, [listedItems]);
+
   const value = useMemo<ListedItemsContextValue>(() => ({
     listedItems,
     isListed,
     listItem,
     unlistItem,
     getListingInfo,
-  }), [listedItems, isListed, listItem, unlistItem, getListingInfo]);
+    getAllListedItems,
+  }), [listedItems, isListed, listItem, unlistItem, getListingInfo, getAllListedItems]);
 
   return (
     <ListedItemsContext.Provider value={value}>

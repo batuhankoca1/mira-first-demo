@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { useMockUser } from '@/hooks/useMockUser';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useListedItems } from '@/hooks/useListedItems';
+import { CATEGORIES } from '@/types/clothing';
 import { 
   User, 
   Settings, 
@@ -15,15 +17,29 @@ import {
   Package,
   CreditCard,
   HelpCircle,
-  LogOut
+  Tag
 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, wardrobeCount, outfitCount } = useMockUser();
   const { getFavoriteCount } = useFavorites();
+  const { getAllListedItems, unlistItem } = useListedItems();
   
   const favoriteCount = getFavoriteCount();
+  const listedItems = getAllListedItems();
+
+  const getConditionLabel = (condition: 'new' | 'like-new' | 'good') => {
+    switch (condition) {
+      case 'new': return 'Yeni Etiketli';
+      case 'like-new': return 'Az Kullanılmış';
+      case 'good': return 'İyi Durumda';
+    }
+  };
+
+  const getCategoryLabel = (categoryValue: string) => {
+    return CATEGORIES.find(c => c.value === categoryValue)?.label || categoryValue;
+  };
 
   return (
     <div className="min-h-screen bg-background pb-28 overflow-y-auto">
@@ -90,6 +106,54 @@ const Profile = () => {
             onClick={() => {}}
           />
         </div>
+
+        {/* Listed Items Section */}
+        {listedItems.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1 flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5" />
+              Satıştaki Ürünlerim ({listedItems.length})
+            </h3>
+            <div className="bg-card rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/30">
+              {listedItems.map((item) => (
+                <div key={item.itemId} className="p-4 flex items-center gap-4">
+                  {/* Item Image */}
+                  <div className="w-16 h-16 rounded-xl bg-gray-100 border border-border/50 overflow-hidden flex-shrink-0">
+                    {item.imageSrc ? (
+                      <img 
+                        src={item.imageSrc} 
+                        alt={item.title} 
+                        className="w-full h-full object-contain p-1"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <Tag className="w-6 h-6" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Item Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground text-sm truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{getCategoryLabel(item.category)}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-bold text-green-600">₺{item.price}</span>
+                      <span className="text-xs text-muted-foreground">• {getConditionLabel(item.condition)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Unlist Button */}
+                  <button
+                    onClick={() => unlistItem(item.itemId)}
+                    className="text-xs text-red-500 hover:text-red-600 font-medium px-3 py-1.5 rounded-full border border-red-200 hover:bg-red-50 transition-colors"
+                  >
+                    Çek
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Menu Sections */}
         <div className="space-y-4">

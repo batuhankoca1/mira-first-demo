@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +14,29 @@ interface SellItemModalProps {
   onOpenChange: (open: boolean) => void;
   item: WardrobeItem | null;
   itemDetails?: { brand?: string; color?: string; type?: string };
-  onSubmit: (data: { price: number; condition: 'new' | 'like-new' | 'good'; description?: string }) => void;
+  onSubmit: (data: { 
+    title: string;
+    category: ClothingCategory;
+    price: number; 
+    condition: 'new' | 'like-new' | 'good'; 
+    description?: string;
+    imageSrc?: string;
+  }) => void;
 }
 
+// 6 main closet categories
+const SELL_CATEGORIES: { value: ClothingCategory; label: string; icon: string }[] = [
+  { value: 'tops', label: 'Üst Giyim', icon: '👕' },
+  { value: 'bottoms', label: 'Alt Giyim', icon: '👖' },
+  { value: 'jackets', label: 'Ceketler', icon: '🧥' },
+  { value: 'dresses', label: 'Elbiseler', icon: '👗' },
+  { value: 'shoes', label: 'Ayakkabılar', icon: '👟' },
+  { value: 'bags', label: 'Çantalar', icon: '👜' },
+];
+
 export function SellItemModal({ open, onOpenChange, item, itemDetails, onSubmit }: SellItemModalProps) {
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<ClothingCategory>('tops');
   const [price, setPrice] = useState('');
   const [condition, setCondition] = useState<'new' | 'like-new' | 'good'>('like-new');
   const [description, setDescription] = useState('');
@@ -43,35 +62,39 @@ export function SellItemModal({ open, onOpenChange, item, itemDetails, onSubmit 
     return categoryLabel;
   }, [item, itemDetails]);
 
-  // Get category label
-  const categoryLabel = useMemo(() => {
-    if (!item) return '';
-    return CATEGORIES.find(c => c.value === item.category)?.label || item.category;
-  }, [item]);
+  // Initialize form when item changes
+  useEffect(() => {
+    if (item && open) {
+      setTitle(autoTitle);
+      setCategory(item.category);
+      setPrice('');
+      setCondition('like-new');
+      setDescription('');
+    }
+  }, [item, open, autoTitle]);
 
   const handleSubmit = () => {
     const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+    if (isNaN(parsedPrice) || parsedPrice <= 0 || !title.trim()) {
       return;
     }
     onSubmit({
+      title: title.trim(),
+      category,
       price: parsedPrice,
       condition,
       description: description.trim() || undefined,
+      imageSrc: item?.src,
     });
-    // Reset form
-    setPrice('');
-    setCondition('like-new');
-    setDescription('');
   };
 
-  const isValid = price && parseFloat(price) > 0;
+  const isValid = title.trim() && price && parseFloat(price) > 0;
 
   if (!item) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm mx-auto bg-[#fdf6ed] border-amber-200">
+      <DialogContent className="max-w-sm mx-auto bg-[#fdf6ed] border-amber-200 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-amber-900 font-serif flex items-center gap-2">
             <Tag className="w-5 h-5" />
@@ -90,20 +113,36 @@ export function SellItemModal({ open, onOpenChange, item, itemDetails, onSubmit 
             />
           </div>
 
-          {/* Auto-filled Title */}
+          {/* Editable Title */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-amber-800">Başlık</Label>
-            <p className="text-sm text-amber-900 bg-white/50 rounded-md px-3 py-2 font-medium">
-              {autoTitle}
-            </p>
+            <Label htmlFor="title" className="text-xs text-amber-800">Başlık</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ürün başlığı girin"
+              className="h-10 bg-white border-amber-200 focus:border-amber-400"
+            />
           </div>
 
-          {/* Auto-filled Category */}
+          {/* Editable Category Dropdown */}
           <div className="space-y-1.5">
             <Label className="text-xs text-amber-800">Kategori</Label>
-            <p className="text-sm text-amber-900 bg-white/50 rounded-md px-3 py-2">
-              {categoryLabel}
-            </p>
+            <Select value={category} onValueChange={(val) => setCategory(val as ClothingCategory)}>
+              <SelectTrigger className="h-10 bg-white border-amber-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SELL_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    <span className="flex items-center gap-2">
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Price Input */}
