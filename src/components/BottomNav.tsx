@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Shirt, Layers, Wand2, Compass, User } from 'lucide-react';
+import { Shirt, Layers, Store, Compass, User } from 'lucide-react';
 
 const navItems = [
   { path: '/closet', label: 'Dolap', icon: Shirt },
   { path: '/dressup', label: 'Kombin', icon: Layers },
-  { path: '/stylist', label: 'Stilist', icon: Wand2 },
+  { path: '/marketplace', label: 'Pazar', icon: Store },
   { path: '/explore', label: 'Keşfet', icon: Compass },
   { path: '/profile', label: 'Profil', icon: User },
 ];
