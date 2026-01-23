@@ -163,7 +163,7 @@ export function AIStylistDrawer({ open, onOpenChange }: AIStylistDrawerProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[85vh] rounded-t-3xl bg-gradient-to-b from-amber-50 to-[#fdf6ed] border-t-2 border-amber-200 p-0 flex flex-col"
+        className="h-[85vh] rounded-t-3xl bg-gradient-to-b from-amber-50 to-[#fdf6ed] border-t-2 border-amber-200 p-0 flex flex-col max-w-md mx-auto left-0 right-0"
       >
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-3 border-b border-amber-200/50 shrink-0">
