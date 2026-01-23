@@ -80,7 +80,7 @@ export function AvatarContainer({ selectedItems, className = '', isTuckedIn = fa
       <div 
         className="relative" 
         style={{ 
-          height: '97%', 
+          height: '90%', 
           aspectRatio: '1 / 2',
         }}
       >
