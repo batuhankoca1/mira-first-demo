@@ -307,14 +307,16 @@ interface AIStylistFABProps {
 
 export function AIStylistFAB({ onClick }: AIStylistFABProps) {
   return (
-    <button
-      onClick={onClick}
-      className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-      aria-label="MIRA Stilist'i Aç"
-    >
-      <Sparkles className="w-6 h-6 text-white" />
-      {/* Pulse ring */}
-      <span className="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-25" />
-    </button>
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-md pointer-events-none">
+      <button
+        onClick={onClick}
+        className="absolute bottom-0 right-4 pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        aria-label="MIRA Stilist'i Aç"
+      >
+        <Sparkles className="w-6 h-6 text-white" />
+        {/* Pulse ring */}
+        <span className="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-25" />
+      </button>
+    </div>
   );
 }
