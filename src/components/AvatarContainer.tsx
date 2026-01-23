@@ -90,10 +90,10 @@ export function AvatarContainer({ selectedItems, className = '', isTuckedIn = fa
           alt="Base Avatar"
           style={{
             position: 'absolute',
-            top: '5%',
-            left: '5%',
-            width: '90%',
-            height: '90%',
+            top: '3.5%',
+            left: '3.5%',
+            width: '93%',
+            height: '93%',
             objectFit: 'contain',
             zIndex: 0,
           }}
