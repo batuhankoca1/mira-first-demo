@@ -187,15 +187,25 @@ Location:
 
 Repository Structure
 mira-first-demo/
-├── demo-media/        # Demo walkthrough video
-├── docs/              # Pitch deck
-├── public/            # Static frontend assets
-├── src/               # Frontend source code
-│   ├── assets         # UI assets only
+
+├── demo-media/ ---------- # Demo walkthrough video
+
+├── docs/ ------------------ # Pitch deck
+
+├── public/ ----------------- # Static frontend assets
+
+├── src/ -------------------- # Frontend source code
+
+│   ├── assets ---------------- # UI assets only
+
 │   ├── components
+
 │   ├── pages
+
 │   └── lib
-├── supabase           # Early backend scaffolding
+
+├── supabase --------------- # Early backend scaffolding
+
 └── README.md
 
 
